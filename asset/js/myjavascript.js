@@ -8794,9 +8794,9 @@ function prosesviewlabelpalet() {
   window.open ("../page/production/timbang/form/page_labelpalet?x="+x+"");
 }
 function submitkirimbahan(e) {
-  if (e.which == 13) {
+  if (e.key === "Enter") {
     var barcode = $('#scanbarcodekirimbahan').val()
-    
+    // alert(barcode)
     $.ajax({
       url: "../function/getdata2.php",
       method  : "POST",
@@ -8850,7 +8850,7 @@ function submitkirimbahan(e) {
           // DATA LABEL
           $('#printlabelkirimbahan').val(data.printlabel)
           $('#diprintolehkirimbahan').val(data.diprintoleh)
-
+          $('#scanbarcodekirimbahan').val('')
         }else{
           Swal.fire({
             text: data.info,
@@ -8858,11 +8858,13 @@ function submitkirimbahan(e) {
             showConfirmButton: false,
             timer: 1500
           })
+          $('#scanbarcodekirimbahan').val('')
         }
       }
     }) 
+  // $('#scanbarcodekirimbahan').val('')
   }
-  $('#scanbarcodekirimbahan').val('')
+  
 }
 function simpankirimbahan() {
   var planningnumber = $('#planningnumberkirimbahan').val()
@@ -8919,7 +8921,7 @@ function simpankirimbahan() {
 function submitterimabahan(e) {
   if (e.which == 13) {
     var barcode = $('#scanbarcodeterimabahan').val()
-    
+    // alert(barcode)
     $.ajax({
       url: "../function/getdata2.php",
       method  : "POST",
@@ -8978,7 +8980,7 @@ function submitterimabahan(e) {
           $('#pengirimterimabahan').val(data.pengirim + ' - ' + data.namapengirim)
           // $('#namapengirimterimabahan').val()
           $('#tglkirimterimabahan').val(data.tglkirim)
-
+            $('#scanbarcodeterimabahan').val('')
         }else{
           Swal.fire({
             text: data.info,
@@ -8986,11 +8988,13 @@ function submitterimabahan(e) {
             showConfirmButton: false,
             timer: 1500
           })
+          $('#scanbarcodeterimabahan').val('')
         }
       }
-    }) 
+    })
+    // $('#scanbarcodeterimabahan').val('') 
   }
-  $('#scanbarcodekirimbahan').val('')
+  
 }
 function simpanterimabahan() {
   var planningnumber = $('#planningnumberterimabahan').val()

@@ -193,7 +193,7 @@ if ($_GET['end'] == '') {
                                 </table>
                                 <div class="form-group row mb-0" id="buttonsetujuisemua">
                                     <div class="col-sm-2">
-                                        <button type="button" class="btn btn-success btn-sm zoom" onclick="saveallapprovalpengemasan()"><img src="../asset/icon/accept2.png"> Setuju Semua</button>
+                                        <button type="button" class="btn btn-success btn-sm zoom" onclick="saveallapprovalpengemasan()" disabled><img src="../asset/icon/accept2.png"> Setuju Semua</button>
                                     </div>
                                 </div>
                             </div>
