@@ -2,12 +2,6 @@
     <h6 class="fw-bold mt-3 text-start"><img src="../asset/icon/express.png"> Kirim bahan (Palet)</h6>
     <hr class="w-50 mb-3">
     <div class="form-group row mb-0">
-        <label for="scanbarcodekirimbahan" class="col-sm-2 col-form-label">Scan Barcode</label>
-        <div class="col-sm-4">
-            <input type="text" class="form-control form-control-sm" id="scanbarcodekirimbahan" placeholder="Barcode Label pallet" autofocus onkeypress="submitkirimbahan(event)">
-        </div>
-    </div>
-    <div class="form-group row mb-0">
         <div class="col-sm-12 offset-2">
             <input type="text" class="form-control form-control-sm border-0 bg-transparent text-danger fw-bold" id="infobarcodekirimbahan" readonly hidden>
             <button class="btn btn-sm btn-success zoom" id="tombolkirimbahan" hidden onclick="simpankirimbahan()"><img src="../asset/icon/sent.png" title="kirim"> Kirim Bahan</button> <span><label id="infokirimbahan" class="text-success fw-bold"></label></span>
