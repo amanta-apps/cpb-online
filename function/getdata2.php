@@ -7,6 +7,7 @@ include "koneksi.php";
 include_once "getvalue.php";
 $plant = $_SESSION['plant'];
 $unitcode = $_SESSION['unitcode'];
+$msg = "Something wrong";
 function loguser2($transaction)
 {
     include "koneksi.php";
@@ -1933,7 +1934,7 @@ if (isset($_POST['prosesviewlistbahan'])) {
 
     echo json_encode($dump);
 }
-if (isset($_POST['prosessavecreateplanningpengolahan'])) { // Submit Sub Planning
+if (isset($_POST['prosessavecreateplanningpengolahan'])) {
     $productid = $_POST['prosessavecreateplanningpengolahan'][0];
     $shift = $_POST['prosessavecreateplanningpengolahan'][1];
     $ed = $_POST['prosessavecreateplanningpengolahan'][2];
@@ -1953,17 +1954,15 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) { // Submit Sub Plannin
     $createdby = $_SESSION['userid'];
     $years = date('Y');
     $return = false;
-    $status = '';
-    $status = true;
+    $status = false;
 
-    $sql = mysqli_query($conn, "SELECT * FROM mapping_preparemixing WHERE Plant='$plant' AND
+    $sql = mysqli_query($conn, "SELECT JmlTeoritis,KodeBahan FROM mapping_preparemixing WHERE Plant='$plant' AND
                                                                         UnitCode='$unitcode' AND
                                                                         ReffCode='$reffcode'");
-    if (mysqli_num_rows($sql) != 0) {
+    if (mysqli_num_rows($sql) <> 0) {
         while ($row = mysqli_fetch_array($sql)) {
             $total = $row['JmlTeoritis'];
             $kodebahan = $row['KodeBahan'];
-
             // ----Proses 1
             $jumlah = 0;
             $query1 = mysqli_query($conn, "SELECT Jumlah FROM tb_detailprosesmixing WHERE Plant='$plant' AND
@@ -1980,7 +1979,7 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) { // Submit Sub Plannin
                 if ($jumlah == $total) {
                     $status = true;
                 } else {
-                    $return = 'List bahan pengolahan belum Komplit';
+                    $msg = 'List bahan pengolahan belum Komplit';
                     break;
                 }
             }
@@ -2001,16 +2000,16 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) { // Submit Sub Plannin
                 if ($jumlah == $total) {
                     $status = true;
                 } else {
-                    $return = 'List bahan pengolahan belum Komplit';
+                    $msg = 'List bahan pengolahan belum Komplit';
                     break;
                 }
             }
         }
     } else {
-        $return = 'Input kode bahan';
+        $msg = 'Input kode bahan';
     }
 
-    if ($status == true) {
+    if ($status) {
         $sql = mysqli_query($conn, "SELECT Items FROM planning_pengolahan_detail WHERE Plant='$plant' AND UnitCode='$unitcode'
                                                                                             AND CreatedBy='$createdby'
                                                                                             AND (PlanningNumber is null or PlanningNumber='') 
@@ -2047,9 +2046,9 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) { // Submit Sub Plannin
                                         '$jumlahresep',
                                         '$reffcode',
                                         '$createdby',
-                                        '$createdon')"); 
-        $return = $sql;
-        if ($sql === true) {
+                                        '$createdon')");
+
+        if ($sql) {
             mysqli_query($conn, "DELETE FROM planning_pengolahan_header WHERE Plant='$plant' AND 
                                                                                 UnitCode='$unitcode' AND
                                                                                 PlanningNumber='' AND 
@@ -2072,17 +2071,17 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) { // Submit Sub Plannin
             $return = true;
         }
         // <------ Edit 21 Agustus 2025 -------> REVISI Pemekaran detail proses mixing berdasarkan batch
-        $batch_loop = explode(",",$batch);
+        $batch_loop = explode(",", $batch);
         $jumlah_loop = count($batch_loop);
 
-        
-        for ($i=0; $i < $jumlah_loop ; $i++) { 
-        $query = mysqli_query($conn,"SELECT * FROM tb_detailprosesmixing WHERE Plant='$plant' AND
+
+        for ($i = 0; $i < $jumlah_loop; $i++) {
+            $query = mysqli_query($conn, "SELECT * FROM tb_detailprosesmixing WHERE Plant='$plant' AND
                                                                                 UnitCode='$unitcode' AND
                                                                                 -- Proses='1' AND
                                                                                 ReffCode='$reffcode'");
-        while ($r = mysqli_fetch_array($query)) {
-            mysqli_query($conn,"INSERT INTO tb_subdetailprosesmixing (Plant,
+            while ($r = mysqli_fetch_array($query)) {
+                mysqli_query($conn, "INSERT INTO tb_subdetailprosesmixing (Plant,
                                                                     UnitCode,
                                                                     ProductID,
                                                                     NoProses,
@@ -2114,8 +2113,12 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) { // Submit Sub Plannin
         }
         // <------ End ------->
     }
-    echo $return;
-    // echo $jumlah_loop;
+    $data = [
+        "msg" => $msg,
+        "status" => $status,
+        "return" => $return
+    ];
+    echo json_encode($data);
 }
 if (isset($_POST['prosescopycreateplanningpengolahan'])) {
     $productid = $_POST['prosescopycreateplanningpengolahan'][0];
@@ -3077,7 +3080,7 @@ if (isset($_POST["prosessimpanqcorganoleptis"])) {
                                                                     Lotyears='$years' AND
                                                                     NoProses='$noproses'");
     if (mysqli_num_rows($sql) == 0) {
-        $a=$lenght;
+        $a = $lenght;
         for ($i = 1; $i < $lenght; $i++) {
             $sql = mysqli_query($conn, "INSERT INTO result_recording(Plant,
                                                                     UnitCode,
@@ -3158,7 +3161,7 @@ if (isset($_POST["prosessimpanqcorganoleptis"])) {
             $return = true;
         }
     }
-    $data =[
+    $data = [
         "return" => $return,
         "prueflos" => $a,
     ];

@@ -8807,7 +8807,6 @@ function submitkirimbahan(e) {
       },
       success: function (data) {
         if (data.return == 1) {
-          // alert(data.output_1)
           document.getElementById('infokirimbahan').innerHTML=''
           if (data.kirim == true) {
             document.getElementById('infokirimbahan').innerHTML=data.info
@@ -9633,21 +9632,28 @@ function simpancreateplanningpengolahan() { // <---- Submit Sub Planning
     if (result.isConfirmed) {
       $.ajax({
         url: "../function/getdata2.php",
-        // dataType: "JSON",
+        dataType: "JSON",
         type: "POST",
         cache: false,
         data: {
-          "prosessavecreateplanningpengolahan": [productid,shift,ed,
-         batch_real,mesin_mix,tglmixing,
-          jumlahresep,createdfor,reviewer_add,reffcode]
+          "prosessavecreateplanningpengolahan": [productid,
+            shift,
+            ed,
+            batch_real,
+            mesin_mix,
+            tglmixing,
+            jumlahresep,
+            createdfor,
+            reviewer_add,
+            reffcode]
         },
         success: function (data) {
-          alert(data)
-          if (data == 1) {
+          alert(data.msg)
+          if (data.return == 1) {
             location.reload()
           }else{
             Swal.fire({
-              text: data,
+              text: data.msg,
               icon: "info",
               showConfirmButton: false,
               timer:5000,
