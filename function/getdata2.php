@@ -1971,7 +1971,7 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
                                                                         Proses='1' AND
                                                                         ReffCode='$reffcode' AND
                                                                         KodeBahan='$kodebahan'");
-            if (mysqli_num_rows($query1) != 0) {
+            if (mysqli_num_rows($query1) <> 0) {
                 while ($r = mysqli_fetch_array($query1)) {
                     $jumlah = $jumlah + $r['Jumlah'];
                 }
@@ -1980,11 +1980,9 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
                     $status = true;
                 } else {
                     $msg = 'List bahan pengolahan belum Komplit';
-                    break;
                 }
             }
 
-            // ----Proses 2
             $jumlah = 0;
             $query2 = mysqli_query($conn, "SELECT Jumlah FROM tb_detailprosesmixing WHERE Plant='$plant' AND
                                                                         UnitCode='$unitcode' AND
@@ -1992,7 +1990,7 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
                                                                         Proses='2' AND
                                                                         ReffCode='$reffcode' AND
                                                                         KodeBahan='$kodebahan'");
-            if (mysqli_num_rows($query2) != 0) {
+            if (mysqli_num_rows($query2) <> 0) {
                 while ($r = mysqli_fetch_array($query2)) {
                     $jumlah = $jumlah + $r['Jumlah'];
                 }
@@ -2001,7 +1999,6 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
                     $status = true;
                 } else {
                     $msg = 'List bahan pengolahan belum Komplit';
-                    break;
                 }
             }
         }
@@ -2009,19 +2006,19 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
         $msg = 'Input kode bahan';
     }
 
-    if ($status) {
-        $sql = mysqli_query($conn, "SELECT Items FROM planning_pengolahan_detail WHERE Plant='$plant' AND UnitCode='$unitcode'
+    $status = false;
+    $sql = mysqli_query($conn, "SELECT Items FROM planning_pengolahan_detail WHERE Plant='$plant' AND UnitCode='$unitcode'
                                                                                             AND CreatedBy='$createdby'
                                                                                             AND (PlanningNumber is null or PlanningNumber='') 
                                                                                             ORDER BY Items DESC");
-        if (mysqli_num_rows($sql) == 0) {
-            $item = 1;
-        } else {
-            $r = mysqli_fetch_array($sql);
-            $item = $r['Items'];
-        }
-        $item = mysqli_num_rows($sql) + 1;
-        $sql = mysqli_query($conn, "INSERT INTO planning_pengolahan_detail (Plant,
+    if (mysqli_num_rows($sql) == 0) {
+        $item = 1;
+    } else {
+        $r = mysqli_fetch_array($sql);
+        $item = $r['Items'];
+    }
+    $item = mysqli_num_rows($sql) + 1;
+    $sql = mysqli_query($conn, "INSERT INTO planning_pengolahan_detail (Plant,
                                                                             UnitCode,
                                                                             Years,
                                                                             Items,
@@ -2047,13 +2044,15 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
                                         '$reffcode',
                                         '$createdby',
                                         '$createdon')");
-
-        if ($sql) {
-            mysqli_query($conn, "DELETE FROM planning_pengolahan_header WHERE Plant='$plant' AND 
+    if ($sql === true) {
+        $status = true;
+    }
+    if ($status) {
+        mysqli_query($conn, "DELETE FROM planning_pengolahan_header WHERE Plant='$plant' AND 
                                                                                 UnitCode='$unitcode' AND
                                                                                 PlanningNumber='' AND 
                                                                                 CreatedBy='$createdby'");
-            mysqli_query($conn, "INSERT INTO planning_pengolahan_header (Plant,
+        mysqli_query($conn, "INSERT INTO planning_pengolahan_header (Plant,
                                                                         UnitCode,
                                                                         Years,Shift,
                                                                         Addreviewer,
@@ -2068,51 +2067,53 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
                                     '$createdfor',
                                     '$createdon',
                                     '$createdby')");
-            $return = true;
-        }
-        // <------ Edit 21 Agustus 2025 -------> REVISI Pemekaran detail proses mixing berdasarkan batch
-        $batch_loop = explode(",", $batch);
-        $jumlah_loop = count($batch_loop);
+        $status = true;
+    }
+    // <------ Edit 21 Agustus 2025 -------> REVISI Pemekaran detail proses mixing berdasarkan batch
+    $batch_loop = explode(",", $batch);
+    $jumlah_loop = count($batch_loop);
 
-
+    if ($status) {
         for ($i = 0; $i < $jumlah_loop; $i++) {
             $query = mysqli_query($conn, "SELECT * FROM tb_detailprosesmixing WHERE Plant='$plant' AND
-                                                                                UnitCode='$unitcode' AND
-                                                                                -- Proses='1' AND
-                                                                                ReffCode='$reffcode'");
+                                                                            UnitCode='$unitcode' AND
+                                                                            -- Proses='1' AND
+                                                                            ReffCode='$reffcode'");
             while ($r = mysqli_fetch_array($query)) {
                 mysqli_query($conn, "INSERT INTO tb_subdetailprosesmixing (Plant,
-                                                                    UnitCode,
-                                                                    ProductID,
-                                                                    NoProses,
-                                                                    Proses,
-                                                                    UrutanProses,
-                                                                    KodeBahan,
-                                                                    ReffCode,
-                                                                    Jumlah,
-                                                                    BatchNumber,
-                                                                    Satuan,
-                                                                    UsedTo,
-                                                                    CreatedOn,
-                                                                    CreatedBy)
-                                VALUES ('$r[Plant]',
-                                        '$r[UnitCode]',
-                                        '$r[ProductID]',
-                                        '$r[NoProses]',
-                                        '$r[Proses]',
-                                        '$r[UrutanProses]',
-                                        '$r[KodeBahan]',
-                                        '$r[ReffCode]',
-                                        '$r[Jumlah]',
-                                        '$batch_loop[$i]',
-                                        '$r[Satuan]',
-                                        '$r[UsedTo]',
-                                        '$r[CreatedOn]',
-                                        '$r[CreatedBy]')");
+                                                                UnitCode,
+                                                                ProductID,
+                                                                NoProses,
+                                                                Proses,
+                                                                UrutanProses,
+                                                                KodeBahan,
+                                                                ReffCode,
+                                                                Jumlah,
+                                                                BatchNumber,
+                                                                Satuan,
+                                                                UsedTo,
+                                                                CreatedOn,
+                                                                CreatedBy)
+                            VALUES ('$r[Plant]',
+                                    '$r[UnitCode]',
+                                    '$r[ProductID]',
+                                    '$r[NoProses]',
+                                    '$r[Proses]',
+                                    '$r[UrutanProses]',
+                                    '$r[KodeBahan]',
+                                    '$r[ReffCode]',
+                                    '$r[Jumlah]',
+                                    '$batch_loop[$i]',
+                                    '$r[Satuan]',
+                                    '$r[UsedTo]',
+                                    '$r[CreatedOn]',
+                                    '$r[CreatedBy]')");
             }
         }
-        // <------ End ------->
+        $return = true;
     }
+    // <------ End ------->
+
     $data = [
         "msg" => $msg,
         "status" => $status,

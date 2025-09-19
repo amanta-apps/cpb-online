@@ -8,6 +8,10 @@ include_once "getvalue.php";
 $plant = $_SESSION['plant'];
 $unitcode = $_SESSION['unitcode'];
 $client = '300';
+$status = false;
+$return = false;
+$msg = '';
+$time = 1500;
 if ($_SESSION['client'] == 'db_sisp_100') {
     $client = '100';
 }
@@ -162,7 +166,6 @@ function showdataIII($value, $table, $where, $valuewhere, $where2, $valuewhere2,
 // Login & Logout
 // ---------------------------------------------------------
 if (isset($_POST['proseslogin'])) {
-    $return = false;
     $userid = $_POST['proseslogin'][0];
     $initialpassword = base64_encode($_POST['proseslogin'][1]);
     $scaptcha = $_POST['proseslogin'][3];
@@ -170,74 +173,98 @@ if (isset($_POST['proseslogin'])) {
     $splant = $_POST['proseslogin'][5];
     $sunitcode = $_POST['proseslogin'][6];
     $vreason = '';
+    $status = true;
 
     $sql = mysqli_query($conn, "SELECT * FROM tb_configlogin WHERE Plant='$splant' AND UnitCode='$sunitcode'");
     $row = mysqli_fetch_array($sql);
     $vreason = $row['Vreason'];
-    if (mysqli_num_rows($sql) != 0) {
+    if (mysqli_num_rows($sql) <> 0) {
         if ($row['Captcha'] == 'X') {
-            if ($scaptcha == '' || $scaptcha != $captcha) {
-                echo $return = 'Captcha Invalid';
-                die;
+            if ($scaptcha == '' || $scaptcha <> $captcha) {
+                $msg = 'Captcha Invalid';
+                $status = false;
             }
         }
     }
-    $sql = mysqli_query($conn, "SELECT * FROM usr02 
+
+    if ($vreason == '') {
+        $status = true;
+    } else {
+        $status = false;
+        $msg = $vreason;
+    }
+    if ($status) {
+        $sql = mysqli_query($conn, "SELECT * FROM usr02 
                                     WHERE (UserID='$userid' OR PersonnelNumber='$userid') 
                                                             AND InitialPassword='$initialpassword'");
-    $q = mysqli_fetch_array($sql);
-    if (mysqli_num_rows($sql) > 0) {
-        if ($q['Locked'] == 'X') {
-            $return = 'User is Locked By IT';
-        } else {
-            if ($q['PersonnelNumber'] != '90003560' && $q['PersonnelNumber'] != '90002748') {
-                if ($vreason != '') {
-                    echo $return = $vreason;
-                    die;
-                }
-            }
-            $login_time = date("Y-m-d H:i:s");
-            $_SESSION["userid"] = ucfirst($q['UserID']);
-            $_SESSION["personnelnumber"] = ucfirst($q['PersonnelNumber']);
-            $sql = mysqli_query($conn, "SELECT * FROM user_log WHERE UserID='$q[UserID]'");
-            if (mysqli_num_rows($sql) == 0) {
-                $sql = "INSERT INTO user_log (UserID,LoginTime,LastAct,ActionPage) VALUES('$q[UserID]','$login_time','$login_time','dashboard')";
-                mysqli_query($conn, $sql);
+        $q = mysqli_fetch_array($sql);
+        if (mysqli_num_rows($sql) > 0) {
+            if ($q['Locked'] == 'X') {
+                $msg = 'User is Locked By IT';
             } else {
-                $sql = "UPDATE user_log SET LoginTime='$login_time', LogoutTime='' WHERE UserID='$q[UserID]'";
-                mysqli_query($conn, $sql);
+                $login_time = date("Y-m-d H:i:s");
+                $_SESSION["userid"] = ucfirst($q['UserID']);
+                $_SESSION["personnelnumber"] = ucfirst($q['PersonnelNumber']);
+                $sql = mysqli_query($conn, "SELECT * FROM user_log WHERE UserID='$q[UserID]'");
+                if (mysqli_num_rows($sql) == 0) {
+                    $sql = "INSERT INTO user_log (UserID,
+                                                    LoginTime,
+                                                    LastAct,
+                                                    ActionPage) VALUES('$q[UserID]',
+                                                                        '$login_time',
+                                                                        '$login_time',
+                                                                        'dashboard')";
+                    mysqli_query($conn, $sql);
+                } else {
+                    $sql = "UPDATE user_log SET LoginTime='$login_time', LogoutTime='' WHERE UserID='$q[UserID]'";
+                    mysqli_query($conn, $sql);
+                }
+                $sql = mysqli_query($conn, "SELECT A.EmployeeName, 
+                                                    B.Descriptions,
+                                                    B.PositionID FROM pa001 AS A
+                                                INNER JOIN pa002 AS B ON A.PositionID = B.PositionID
+                                                WHERE A.PersonnelNumber='$q[PersonnelNumber]'");
+                $r = mysqli_fetch_array($sql);
+                $_SESSION["employeename"] = ucfirst($r['EmployeeName']);
+                $_SESSION["positionid"] = ucfirst($r['PositionID']);
+                $_SESSION["jabatan"] = ucfirst($r['Descriptions']);
+                $_SESSION["logintime"] = date("Y-m-d H:i:s");
+                $_SESSION["unitcode"] = $sunitcode;
+                include_once 'getvalue.php';
+                $_SESSION["unitdesc"] = Getdata('Descriptions', 't001w', 'Unit', $sunitcode);
+                $_SESSION["plant"] = $splant;
+                $_SESSION["login"] = true;
+                $return = true;
+                $msg = 'Login Sukses';
             }
-            $sql = mysqli_query($conn, "SELECT A.EmployeeName, B.Descriptions,B.PositionID FROM pa001 AS A
-                                        INNER JOIN pa002 AS B ON A.PositionID = B.PositionID
-                                        WHERE A.PersonnelNumber='$q[PersonnelNumber]'");
-            $r = mysqli_fetch_array($sql);
-            $_SESSION["employeename"] = ucfirst($r['EmployeeName']);
-            $_SESSION["positionid"] = ucfirst($r['PositionID']);
-            $_SESSION["jabatan"] = ucfirst($r['Descriptions']);
-            $_SESSION["logintime"] = date("Y-m-d H:i:s");
-            $_SESSION["unitcode"] = $sunitcode;
-            include_once 'getvalue.php';
-            $_SESSION["unitdesc"] = Getdata('Descriptions', 't001w', 'Unit', $sunitcode);
-            $_SESSION["plant"] = $splant;
-            $_SESSION["login"] = true;
-            $return = true;
+        } else {
+            $msg = 'Incorrect User ID or Password';
         }
-    } else {
-        $return = 'Incorrect User ID or Password';
     }
-    echo $return;
+
+    $data = [
+        "pernr" => $_SESSION["personnelnumber"],
+        "icon_s" => 'success',
+        "icon_e" => 'warning',
+        "msg" => $msg,
+        "time" => $time,
+        "link" => 'page/mainpage?p=dashboard',
+        "return" => $return
+    ];
+    echo json_encode($data);
 }
 if (isset($_POST['proseslogout'])) {
     $return = false;
     $logouttime = date('Y-m-d H:i:s');
-    // $sql = mysqli_query($Xcon, "UPDATE user_log SET LogoutTime='$logouttime'
-    //                     WHERE IdUser='$_SESSION[iduser]'");
-    // if ($sql === true) {
     mysqli_query($conn, "DELETE FROM user_log WHERE UserID='$_SESSION[userid]'");
     session_destroy();
     session_unset();
     $return = true;
-    // }
+    $data = [
+        "logout" => $logouttime,
+        "link" => "../index",
+        "return" => $return
+    ];
     echo $return;
 }
 if (isset($_POST['cekotorisasi'])) {
@@ -1077,7 +1104,7 @@ if (isset($_GET['p'])) {
 // Data Produk
 // ---------------------------------------------------------
 if (isset($_POST['prosessimpanproduk'])) {
-    $result = false;
+    $return = false;
     $produkid = strtoupper($_POST['prosessimpanproduk'][0]);
     $deskripsi = strtoupper($_POST['prosessimpanproduk'][1]);
     $standardroll = $_POST['prosessimpanproduk'][2];
@@ -1093,14 +1120,10 @@ if (isset($_POST['prosessimpanproduk'])) {
     $createdby = $_SESSION['userid'];
     $changeon = date("Y-m-d H:i:s");
     $changeby = $_SESSION['userid'];
-    $sql = mysqli_query($conn, "SELECT * FROM mara_product WHERE ProductID = '$produkid'");
+    $sql = mysqli_query($conn, "SELECT ProductID FROM mara_product WHERE ProductID = '$produkid'");
     $q = mysqli_fetch_array($sql);
     if (mysqli_num_rows($sql) > 0) {
-        // $sql = mysqli_query($Xcon, "UPDATE mara_product SET ProductDescriptions='$deskripsi',
-        //                             StandardRoll='$standardroll',StandardBeratPrimer='$standardprimer',
-        //                             ChangeOn='$changeon',ChangeBy='$changeby' 
-        //                             WHERE ProductID='$produkid'");
-        $result = 2;
+        $return = 2;
     } else {
         $sql = mysqli_query($conn, "INSERT INTO mara_product (ProductID,
                                                             ProductDescriptions,
@@ -1128,14 +1151,24 @@ if (isset($_POST['prosessimpanproduk'])) {
                                             '$bobottimbang',
                                             '$createdon',
                                             '$createdby')");
+        if ($sql === true) {
+            $return = true;
+            $msg = 'Data tersimpan';
+        }
     }
-    if ($sql === true) {
-        $result = true;
-    }
-    echo $result;
+
+    $data = [
+        "icon_s" => 'success',
+        "icon_e" => 'warning',
+        "produk" => $produkid,
+        "msg" => $msg,
+        "time" => $time,
+        "link" => null,
+        "return" => $return
+    ];
+    echo json_encode($data);
 }
 if (isset($_POST['prosesupdateproduk'])) {
-    $result = false;
     $produkid = strtoupper($_POST['prosesupdateproduk'][0]);
     $deskripsi = strtoupper($_POST['prosesupdateproduk'][1]);
     $standardroll = $_POST['prosesupdateproduk'][2];
@@ -1149,7 +1182,7 @@ if (isset($_POST['prosesupdateproduk'])) {
     $standardduskonversi = $_POST['prosesupdateproduk'][10];
     $changeon = date("Y-m-d H:i:s");
     $changeby = $_SESSION['userid'];
-    $sql = mysqli_query($conn, "SELECT * FROM mara_product WHERE ProductID = '$produkid'");
+    $sql = mysqli_query($conn, "SELECT ProductID FROM mara_product WHERE ProductID = '$produkid'");
     $q = mysqli_fetch_array($sql);
     if (mysqli_num_rows($sql) > 0) {
         $sql = mysqli_query($conn, "UPDATE mara_product SET ProductDescriptions='$deskripsi',
@@ -1159,18 +1192,39 @@ if (isset($_POST['prosesupdateproduk'])) {
                                     StandardBeratPrimer='$standardprimer',TotalSelfLife='$totalselflife',BobotTimbang='$bobottimbang',
                                     ChangeOn='$changeon',ChangeBy='$changeby' 
                                     WHERE ProductID='$produkid'");
-        $result = true;
+        if ($sql === true) {
+            $return = true;
+            $msg = 'Data tersimpan';
+        }
     }
-    echo $result;
+    $data = [
+        "icon_s" => 'success',
+        "icon_e" => 'warning',
+        "msg" => $msg,
+        "time" => $time,
+        "link" => null,
+        "return" => $return
+    ];
+    echo json_encode($data);
 }
 if (isset($_POST['prosesdeleteproduk'])) {
-    $return = false;
     $produkid = $_POST['prosesdeleteproduk'];
     $sql = mysqli_query($conn, "DELETE FROM mara_product WHERE ProductID ='$produkid'");
     if ($sql === true) {
         $return = true;
+        $msg = 'Data terhapus';
     }
-    echo $return;
+
+    $data = [
+        "icon_s" => 'success',
+        "icon_e" => 'warning',
+        "produk" => $produkid,
+        "msg" => $msg,
+        "time" => $time,
+        "link" => null,
+        "return" => $return
+    ];
+    echo json_encode($data);
 }
 if (isset($_POST['proseschangeproduk'])) {
     $dump[] = '';
@@ -6875,7 +6929,7 @@ if (isset($_POST['prosessubmitanalisapengemasanprimer_one'])) {
     $koorqc = $koorqc_convert[0];
 
     // Insert Header
-    $query = mysqli_query($conn, "SELECT * FROM qc_analisapengemasanprimer_header WHERE Plant='$plant' AND
+    $query = mysqli_query($conn, "SELECT PlanningNumber FROM qc_analisapengemasanprimer_header WHERE Plant='$plant' AND
                                                                                     UnitCode='$unitcode' AND
                                                                                     PlanningNumber='$planningnumber' AND
                                                                                     Years='$years'");
@@ -6910,6 +6964,7 @@ if (isset($_POST['prosessubmitanalisapengemasanprimer_one'])) {
                                                                                         '$shift',
                                                                                         '$createdon',
                                                                                         '$createdby')");
+        $status = true;
     } else {
         $sql =  mysqli_query($conn, "UPDATE qc_analisapengemasanprimer_header SET TingkatInspeksi='$tingkatinspeksi', 
                                                                             JmlContohFrek='$jmlhcontohperfrekuensi',
@@ -6926,12 +6981,13 @@ if (isset($_POST['prosessubmitanalisapengemasanprimer_one'])) {
                                                                                     UnitCode='$unitcode' AND
                                                                                     PlanningNumber='$planningnumber' AND
                                                                                     Years='$years'");
+        $status = true;
     }
-    if ($sql === true) {
+    if ($status == true) {
         include_once 'getvalue.php';
         $pemasok = GetdataII('Idpemasok', 'data_pemasok', 'Plant', $plant, 'Descriptions', $pemasok);
 
-        $sql = mysqli_query($conn, "SELECT * FROM qc_analisapengemasanprimer_one_detail WHERE Plant='$plant' AND
+        $sql = mysqli_query($conn, "SELECT PlanningNumber FROM qc_analisapengemasanprimer_one_detail WHERE Plant='$plant' AND
                                                                                     UnitCode='$unitcode' AND
                                                                                     PlanningNumber='$planningnumber' AND
                                                                                     Years='$years' AND
@@ -6995,10 +7051,18 @@ if (isset($_POST['prosessubmitanalisapengemasanprimer_one'])) {
                                                                                 '$catatan',
                                                                                 '$createdon',
                                                                                 '$createdby')");
-            $return = true;
+
+            if ($query === true) {
+                $return = true;
+            }
         }
     }
-    echo $return;
+    $data = [
+        "pemasok" => $pemasok,
+        "id" => $planningnumber,
+        "return" => $return
+    ];
+    echo json_encode($data);
 }
 if (isset($_POST['showtableanalisakemasanprimer'])) {
     $planningnumber = $_POST['showtableanalisakemasanprimer'][0];

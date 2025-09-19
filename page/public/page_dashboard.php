@@ -182,7 +182,7 @@ if ($_GET['end'] == '') {
                                                 <td><?= GetdataIV('MixingDate', 'planning_prod_header', 'Plant', $plant, 'UnitCode', $unitcode, 'PlanningNumber', $row['PlanningNumber'], 'Years', $row['Years']) ?></td>
                                                 <!-- <td><?= $pernr2 . ' - ' . Getdata('EmployeeName', 'pa001', 'PersonnelNumber', $pernr2) ?></td> -->
                                                 <td><?= date('d/m/Y H:i:s', strtotime($row['CreatedOn'])) ?></td>
-                                                <td><a href="#" class="badge bg-success zoom text-decoration-none text-white" onclick="prosesapprovalreviewer('<?= $row['ProcessType'] ?>','<?= $row['PlanningNumber'] ?>','<?= $row['Years'] ?>','<?= $row['Levels'] ?>','<?= $row['PersonnelNumber'] ?>')"><img src="../asset/icon/accept2.png"> Setuju</a>
+                                                <td><a href="#" class="badge bg-success zoom text-decoration-none text-white" onclick="prosesapprovalreviewer('<?= $row['ProcessType'] ?>','<?= $row['PlanningNumber'] ?>','<?= $row['Years'] ?>','<?= $row['Levels'] ?>','<?= $row['PersonnelNumber'] ?>','Y')"><img src="../asset/icon/accept2.png"> Setuju</a>
                                                     <a href="#" class="badge bg-danger zoom text-decoration-none text-white" onclick="message(1)"><img src="../asset/icon/no_accept.png"> Tolak</a>
                                                 </td>
                                             </tr>

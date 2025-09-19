@@ -204,6 +204,7 @@ function validasiloginenter() {
         }
         $.ajax({ 
           url: "function/getdata.php",
+          dataType: "JSON",
           type: "POST",
           cache: false,
           data: {
@@ -212,21 +213,21 @@ function validasiloginenter() {
             plant,unitcode]
           },
           success: function (data) {
-            if (data == 1) {
+            if (data.return == 1) {
               Swal.fire({
-                icon: 'success',
-                text: 'Login Sukses',
+                icon: data.icon_s,
+                text: data.msg,
                 showConfirmButton: false,
               })
               setTimeout(function () {
-                location.href = "page/mainpage?p=dashboard";
-              }, 1500);
+                location.href = data.link;
+              }, data.time);
             }else{
               Swal.fire({
-                icon: 'warning',
-                text: data,
+                icon: data.icon_e,
+                text: data.msg,
                 showConfirmButton: false,
-                timer: 1500
+                timer: data.time
               })
             }
           },
@@ -251,6 +252,7 @@ function validasilogin() {
     }
     $.ajax({ 
       url: "function/getdata.php",
+      dataType: "JSON",
       type: "POST",
       cache: false,
       data: {
@@ -259,22 +261,21 @@ function validasilogin() {
         plant,unitcode]
       },
       success: function (data) {
-        // alert(data)
-        if (data == 1) {
+        if (data.return == 1) {
           Swal.fire({
-            icon: 'success',
-            text: 'Login Sukses',
+            icon: data.icon_s,
+            text: dta.msg,
             showConfirmButton: false,
           })
           setTimeout(function () {
-            location.href = "page/mainpage?p=dashboard";
-          }, 1500);
+            location.href = data.link;
+          }, data.time);
         }else{
           Swal.fire({
-            icon: 'warning',
-            text: data,
+            icon: data.icon_e,
+            text: data.msg,
             showConfirmButton: false,
-            timer: 3000
+            timer: data.time
           })
         }
       },
@@ -292,14 +293,15 @@ function logoutsystem() {
     if (result.isConfirmed) {
       $.ajax({
         url: "../function/getdata.php",
+        dataType: "JSON",
         type: "POST",
         cache: false,
         data: {
-          proseslogout: ''
+          "proseslogout": true
         },
         success: function (data) {
-          if (data == 1) {
-            location.href = "../index";
+          if (data.return == 1) {
+            location.href = data.link;
           }
         }
       })
@@ -670,6 +672,7 @@ function saveallapprovalpengolahan() {
     }
   $.ajax({
     url: "../function/getdata.php",
+    dataType: "JSON",
     type: "POST",
     cache: false,
     data: {
@@ -686,20 +689,18 @@ function saveallapprovalpengolahan() {
       standardduskonversi]
     },
     success: function (data) {
-      if (data == 1) {
+      if (data.return == 1) {
         Swal.fire({
-          title: "Success",
-          text: "Data Tersimpan",
-          icon: "success",
+          text: data.msg,
+          icon: data.icon_s,
           showConfirmButton: false,
         })
         setTimeout(function () {
           location.reload()
-        }, 1500);
-      }else if(data == 2){
+        }, data.time);
+      }else if(data.return == 2){
         Swal.fire({
-          title: 'Product is available.',
-          text: "Update data product " + produkid,
+          text: "Update data product " + data.produkid,
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#3085d6',
@@ -709,6 +710,7 @@ function saveallapprovalpengolahan() {
           if (result.isConfirmed) {
             $.ajax({
               url: "../function/getdata.php",
+              dataType: "JSON",
               type: "POST",
               cache: false,
               data: {
@@ -725,16 +727,15 @@ function saveallapprovalpengolahan() {
                 standardduskonversi]
               },
               success: function (dataupdate) {
-                if (dataupdate == 1) {
+                if (dataupdate.return == 1) {
                   Swal.fire({
-                    title: "Success",
-                    text: "Data Tersimpan",
-                    icon: "success",
+                    text: data.msg,
+                    icon: data.icon_s,
                     showConfirmButton: false,
                   })
                   setTimeout(function () {
                     location.reload()  
-                  }, 1500);
+                  }, data.time);
                 }
               }
             })
@@ -755,7 +756,7 @@ function saveallapprovalpengolahan() {
   }
   function deleteddataproduk(prodctid) {
     Swal.fire({
-      title: 'Are you sure?',
+      // title: 'Are you sure?',
       text: "Delete product " + prodctid,
       icon: 'warning',
       showCancelButton: true,
@@ -766,31 +767,31 @@ function saveallapprovalpengolahan() {
       if (result.isConfirmed) {
         $.ajax({
           url: "../function/getdata.php",
+          dataType: "JSON",
           type: "POST",
           cache: false,
           data: {
-            prosesdeleteproduk: prodctid
+            "prosesdeleteproduk": prodctid
           },
           success: function (data) {
-            if (data == 1) {
+            if (data.return == 1) {
               Swal.fire({
-                title: "Success",
-                text: "Data Terhapus",
-                icon: "success",
+                text: data.msg,
+                icon: data.icon_s,
                 showConfirmButton: true,
               })
               setTimeout(function () {
                 location.reload()
-              }, 1500);
+              }, data.time);
             } else {
               Swal.fire({
-                Text: "Data Gagal Tersimpan",
-                icon: "error",
+                Text: data.msg,
+                icon: data.icon_e,
                 showConfirmButton: false,
               })
               setTimeout(function () {
                 location.reload()
-              }, 1500);
+              }, data.time);
             }
           },
         });  
@@ -804,7 +805,7 @@ function saveallapprovalpengolahan() {
       type: "POST",  
       cache: false,
       data: {
-        proseschangeproduk: prodctid
+        "proseschangeproduk": prodctid
       },
       success: function (data) {
         document.getElementById('idprodukdataproduk').disabled = true
@@ -6628,9 +6629,10 @@ function submitanalisapengemasanprimer_one() {
     missingplanningnumber()
     return
   }
-  alert(planningnumber)
+ 
   $.ajax({
     url: "../function/getdata.php",
+    dataType: "JSON",
     type: "POST",
     cache: false,
     data: {
@@ -6672,8 +6674,7 @@ function submitanalisapengemasanprimer_one() {
   ]
     },
     success: function (data) {
-      alert(data)
-      if (data == 1) {
+      if (data.return == 1) {
         $.ajax({
           url: "../function/getdata.php",
           dataType: "JSON",
@@ -6885,7 +6886,6 @@ function submit2analisapengemasanprimer_two() {
   ]
     },
     success: function (data) {
-      alert()
       if (data == 1) {
         $.ajax({
           url: "../function/getdata.php",
@@ -7457,7 +7457,7 @@ function simpanusermanagemen() {
     type: "POST",
     cache: false,
     data: {
-      prosessimpanusermanagemen: [unit,type_transaksi]
+      "prosessimpanusermanagemen": [unit,type_transaksi]
     },
     success: function (data) {
       if (data == 1) {
@@ -9648,7 +9648,6 @@ function simpancreateplanningpengolahan() { // <---- Submit Sub Planning
             reffcode]
         },
         success: function (data) {
-          alert(data.msg)
           if (data.return == 1) {
             location.reload()
           }else{
