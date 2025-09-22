@@ -174,7 +174,8 @@ function topFunction() {
 }
 
 
-// ----------Transaksi - Login & Logout------------
+// ---------->> Transaksi - Login & Logout
+
 function showpassword() {
     var x = document.getElementById('passworddatalogin');
     if (x.type === "password") {
@@ -369,7 +370,7 @@ function showversionaplikasi() {
   $('#versionaplikasi').modal('show')
 }
 
-// -----------Dashboard-----------------
+// ----------->> Dashboard
 
 function submitdisplayapprovalallproses() {
   var tglstart = $('#tglfromallproses').val()
@@ -647,7 +648,7 @@ function saveallapprovalpengolahan() {
   })
 }
 
-// ------------Master Data - Product--------------------
+// ------------>> Master Data - Product
   function simpanproduk() {
     var produkid = $('#idprodukdataproduk').val()
     var deskripsi = $('#deskripsidataproduk').val()
@@ -828,7 +829,7 @@ function saveallapprovalpengolahan() {
     });
   }
 
-// -----------Master Data - Shift--------------
+// ----------->> Master Data - Shift
   function simpanshift() {
     var shiftid = $('#shiftidshift').val()
     var shiftdeskripsi = $('#shiftdescriptiondatashift').val()
@@ -972,7 +973,7 @@ function saveallapprovalpengolahan() {
     });
   }
 
-// -----------Master Data - Shift Range------------------
+// ----------->> Master Data - Shift Range
 
 function simpanshiftrange() {
   var rangetime = $('#rangetimeiddatashiftrange').val()
@@ -1111,7 +1112,7 @@ function changedatashift_range(shiftidrange) {
   });
 }
 
-// -------------Master Data - Main Resource-------------------
+// ------------->> Master Data - Main Resource
 function simpanmainresource() {
   var idmain = $('#resourceidmainresource').val()
   var deskripsi1 = $('#resourcedesription1mainresource').val()
@@ -1259,7 +1260,7 @@ function changedatamainresource(idmain) {
   });
 }
 
-// --------------Master Data - Primary Resource-----------------
+// -------------->> Master Data - Primary Resource
 function simpanprimaryresource() {
   var idprimary = $('#primaryresourceidprimaryresource').val()
   var deskripsi = $('#descriptionprimaryresource').val()
@@ -1409,7 +1410,7 @@ function changedataprimaryresource(idprimary) {
   });
 }
 
-// -------------Master Data - Secondary Resource----------------
+// ------------->> Master Data - Secondary Resource
 function simpansecondaryresource() {
   var idsecondary = $('#secondaryresourceidsecondaryresource').val()
   var deskripsi = $('#descriptionsecondaryresource').val()
@@ -1557,7 +1558,7 @@ function changedatasecondaryresource(idsecondary) {
   });
 }
 
-// --------------Master Data - Mixing Resource------------------
+// -------------->> Master Data - Mixing Resource
 function simpanmixingresource() {
   var idmixing = $('#resourceidmixingresource').val()
   var deskripsi = $('#descriptionmixingresource').val()
@@ -1702,7 +1703,7 @@ function changedatamixingresource(idmixing) {
   });
 }
 
-// --------------Master Data - Data Employee------------------
+// -------------->> Master Data - Data Employee
 function simpanemployee() {
   var pernr = $('#personalnumberemployee').val()
   var nama = $('#employeenameemployee').val()
@@ -1847,7 +1848,7 @@ function changedataemployee(pernr) {
   });
 }
 
-// --------------Master Data - Mapping Timbangan--------------
+// -------------->> Master Data - Mapping Timbangan
 function simpandaftartimbangan() {
   var ipadd = $('#ipaddressdatatimbangan').val()
   var namatimbangan = $('#namatimbangandatatimbangan').val()
@@ -1975,7 +1976,7 @@ function changedatatimbangan(ipadd) {
   });
 }
 
-// -------------Transaksi - Authorization-----------------
+// ------------->> Transaksi - Authorization
 function simpanauth() {
   var userid = $('#useriduserotorisasi').val()
   var pernr = $('#personalnumberuserotorisasi').val()
@@ -2127,7 +2128,7 @@ function getnamekaryawan(pernr) {
   });
 }
 
-// ------------Master Data - Job Position---------------
+// ------------>> Master Data - Job Position
 function simpanjob() {
   var idposition = $('#positionidjobposition').val()
   var deskripsi = $('#descriptionjobposition').val()
@@ -2265,7 +2266,7 @@ function changedatajob(positionid) {
   });
 }
 
-// ------------Config - Assign Role------------------
+// ------------>> Config - Assign Role
 function selectuseridassignrole(userid,employeename,pernr) {
   $('#useridassignrole').val(userid)
   $('#employeenameassignrole').val( pernr+" - "+employeename)
@@ -2323,7 +2324,7 @@ function simpanassignrole() {
   })
 }
 
-// ---------Config - Menu-----------------------
+// --------->> Config - Menu
 function simpanmenu() {
   var menu = $('#menudaftarmenu').val()
   var deskripsi = $('#deskripsidaftarmenu').val()
@@ -2442,7 +2443,7 @@ function deletedatamenu(menu) {
   })
 }
 
-// ---------Config - Reviewer-----------------------
+// --------->> Config - Reviewer
 function simpanreviewercpb() {
   var menu = $('#menureviewercpb').val()
   var pernr = $('#pernrreviewercpb').val()
@@ -2522,7 +2523,7 @@ function deletereviewercpb(menu,pernr) {
     }
   })
 }
-// -----------Config - Role----------------------
+// ----------->> Config - Role
 function simpanrole() {
   var koderole = $('#koderoledatarole').val()
   var roles = $('#roledatarole').val()
@@ -2616,7 +2617,7 @@ function deletedatarole(roles,menu) {
   })
 }
 
-// ----------Transaksi - Planning Pengemasan----------------------
+// ---------->> Transaksi - Planning Pengemasan-
 function submitproductcreateplanning() {
   var input = document.getElementById("productidcreateplanning");
   input.addEventListener("keypress", function(event) {
@@ -3150,7 +3151,7 @@ function simpanapprovalplanning(planningnumber) {
   })
 }
 
-// ------------Master Data - Master of Inspection Characteristic---------------
+// ------------>> Master Data - Master of Inspection Characteristic
 function simpanmic() {
   var mic = $('#micdatamic').val()
   var desc = $('#descdatamic').val()
@@ -3266,7 +3267,7 @@ function deleteddatamic(mic) {
   })
 }
 
-// ------------Master Data - Assign Master of Inspection Characteristic---------------
+// ------------>> Master Data - Assign Master of Inspection Characteristic
 function selectproductassignmic(productid,desc) {
   location.href = linkedip+'/page/mainpage?p=assignmic&x='+productid+'&y='+desc+''
 }
@@ -3349,7 +3350,7 @@ function deleteddataassignmic(productid,mic) {
   })
 }
 
-// -------------Cahnge/Display Planning Pengolahan------------------
+// ------------->> Cahnge/Display Planning Pengolahan
 
 function submitstartdisplayplanningpengolahan() {
   var productid = $('#productidstartdisplayplanningpengolahan').val()
@@ -3766,12 +3767,8 @@ function prosescreatepengolahan(values) {
     },
   });
 }
-// function missingkodebahan(kodebahan) {
-//   $('#kodebahanlistbahancreatepengolahan').val(kodebahan)
-//   topFunction()
-// }
-// ---------------------------------------------------------
-// Cahnge/Display Planning Pengemasan
+
+// ------------->> Cahnge/Display Planning Pengemasan
 
 function submitstartdisplayplanningpengemasan() {
   var productid = $('#productidstartdisplayplanningpengemasan').val()
@@ -3875,9 +3872,8 @@ function konfirmbatchauto(productid,resep) {
       "proseskonfirmbatchauto": [productid,resep]
     },
     success: function (data) {
-      // alert(data.test)
       if (data.return == 1) {
-        $('#batchcreateplanningpengolahan').val(data.bets)
+        $('#batchcreateplanningpengolahan').val(data.bets_next)
       }else{
         document.getElementById('modalproductidbetsotomatis').innerHTML= $('#descriptionproductcreateplanningpengolahan').val()
         document.getElementById('modaltotalresepsotomatis').value = $('#jumlahresepcreateplanningpengolahan').val()
@@ -3909,7 +3905,7 @@ function batchauto(productid) {
 }
 
 
-// ---------Transaksi - Start Display Planning---------------
+// --------->> Transaksi - Start Display Planning
 
 function selectproductidstartdisplayplanning(productid,batch) {
   $('#productidstartdisplayplanning').val(productid)
@@ -4037,41 +4033,6 @@ function updateproduksiplanningdisplayplanning() {
     }
   })
 }
-// function prosesapprovalplanning(planningnumber) {
-//   Swal.fire({
-//     // title: 'Are you sure?',
-//     text: "Approve planning number " + planningnumber + "?",
-//     icon: 'question',
-//     showCancelButton: true,
-//     confirmButtonColor: '#3085d6',
-//     cancelButtonColor: '#d33',
-//     confirmButtonText: 'Approved'
-//   }).then((result) => {
-//     if (result.isConfirmed) {
-//       $.ajax({
-//         url: "../function/getdata.php",
-//         type: "POST",
-//         cache: false,
-//         data: {
-//           prosesapprovalplanning: planningnumber
-//         },
-//         success: function (data) {
-//           if (data == 1) {
-//             Swal.fire({
-//               // title: "Planning Number " + planning,
-//               text: "Planning Number has been Approved",
-//               icon: "success",
-//               showConfirmButton: false,
-//             })
-//             setTimeout(function (data) {
-//               location.reload()  
-//             }, 1500);
-//           }
-//         }
-//       })
-//     }
-//   })
-// }
 function submitstartdisplaydata(planningnumber) {
     var x =  $('#nomorplanningdisplaydata').val()
     var y =  $('#yeardisplaydata').val() 
@@ -4104,7 +4065,7 @@ function submitshiftdisplayplanning(shiftid) {
   $('#modaldisplayplanning').modal('show')
 }
 
-// --------------Transaksi - Print Work Order---------------------
+// -------------->> Transaksi - Print Work Order---------------------
 
 function submitstartprintworkorder(planningnumber,years) {
   if (planningnumber == '') {
@@ -4125,7 +4086,7 @@ function prosesselectworkorder(planningnumber,years) {
   $('#searchplanningworkorder').modal('hide') 
 }
 
-// --------------Transaksi - Print Label Manual---------------------
+// -------------->> Transaksi - Print Label Manual---------------------
 
 function selectproductprintlabelbahan(productid,desc) {
   $('#produkidprintlabelbahan').val(productid)
@@ -4203,7 +4164,7 @@ function cekkodebahan(kodebahan) {
     }
   })
 }
-// --------------Transaksi - Persiapan Hoper----------------------
+// -------------->> Transaksi - Persiapan Hoper----------------------
 
 function prosesselectpersiapanhoper(planningnumber,years) {
   $.ajax({
@@ -4309,7 +4270,7 @@ function simpanpersiapanhopper() {
   })
 }
 
-// ----------------Transaksi - Prepare Topack-------------------
+// ---------------->> Transaksi - Prepare Topack-------------------
 
 function prosesselectpersiapatopack(planningnumber,years) {
   $.ajax({
@@ -9561,9 +9522,8 @@ function simpanconfigplanningdataconfiguration(value) {
 
 // -------- Create Planning - Pengolahan --------------
 
-function selectproductcreateplanningpengolahan(productid,description,totalselflife) {
-  $('#productidcreateplanningpengolahan').val(productid)
-  
+function selectproductcreateplanningpengolahan(productid) {
+  $('#productidcreateplanningpengolahan').val(productid) 
   var productid =  $('#productidcreateplanningpengolahan').val()
       $.ajax({
         url: "../function/getdata.php",
@@ -9761,7 +9721,7 @@ function selesaicreateplanningpengolahan() { // <----- Selesai Planning
             })
           } else {
             Swal.fire({
-              Text: "Data Tidak Tersimpan",
+              text: data.msg,
               icon: "error",
               showConfirmButton: false,
             })

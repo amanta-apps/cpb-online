@@ -12,6 +12,7 @@ $status = false;
 $return = false;
 $msg = '';
 $time = 1500;
+$data = [];
 if ($_SESSION['client'] == 'db_sisp_100') {
     $client = '100';
 }
@@ -2202,22 +2203,26 @@ if (isset($_POST['edautomatiscreateplanning'])) {
     echo $tanggalautomatis;
 }
 if (isset($_POST['sumbitproductmanual'])) {
-    $dump[] = '';
     $productid = $_POST['sumbitproductmanual'];
-    $sql = mysqli_query($conn, "SELECT * FROM mara_product WHERE ProductID = '$productid' OR ProductDescriptions= '$productid'");
+    $sql = mysqli_query($conn, "SELECT *
+                                FROM mara_product 
+                                WHERE ProductID = '$productid' OR 
+                                        ProductDescriptions= '$productid'");
     $q = mysqli_fetch_array($sql);
     if (mysqli_num_rows($sql) > 0) {
-        $dump['statuscode'] = true;
-        $dump['productid'] = $q['ProductID'];
-        $dump['descriptions'] = $q['ProductDescriptions'];
         $exp = $q['TotalSelfLife'];
         $date = date('Y-m-d');
         if ($exp != 0) {
             $tanggalautomatis = date('Y-m-d', strtotime($date . '+' . $exp . ' month'));
         }
-        $dump['selflife'] = $tanggalautomatis;
+        $data = [
+            "statuscode" => true,
+            "productid" => $q['ProductID'],
+            "descriptions" => $q['ProductDescriptions'],
+            "selflife" => $tanggalautomatis
+        ];
     }
-    echo json_encode($dump);
+    echo json_encode($data);
 }
 if (isset($_POST['sumbitshiftmanual'])) {
     $dump[] = '';
@@ -9188,13 +9193,6 @@ if (isset($_POST['prosescekmessage'])) {
             $return = true;
         }
     }
-    // $sql = mysqli_query($conn, "SELECT * FROM user_management WHERE Unit='$plant' AND Stats1='X'");
-    // if (mysqli_num_rows($sql) > 0) {
-    //     $b = strtotime($row['Time_to']) - strtotime($timenow);
-    //     if ($b <= 0) {
-    //         mysqli_query($conn, "UPDATE usr02 SET Locked='' WHERE UserID !='SM000'");
-    //     }
-    // }
     $dump['a'] = $a;
     $dump['return'] = $return;
     echo json_encode($dump);

@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Jakarta');
 function Getkode($value, $table)
 {
     include 'koneksi.php';
@@ -403,4 +404,13 @@ function beautydate2($tanggal)
         $tgl = '';
     }
     return $tgl;
+}
+function errorlog($errortext)
+{
+    include 'koneksi.php';
+    $createdon = date("Y-m-d H:i:s");
+    $createdby = $_SESSION['personnelnumber'];
+    $query = "INSERT INTO table_errorlog (errortext,createdon,createdby)
+                VALUES('$errortext','$createdon','$createdby')";
+    mysqli_query($conn, $query);
 }

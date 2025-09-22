@@ -286,31 +286,31 @@ if ($_SESSION['client'] == 'db_sisp_100') {
         });
     }, 3000)
 
-    var intervalman = setInterval(() => {
-        $.ajax({
-            url: "../function/getdata.php",
-            dataType: "JSON",
-            type: "POST",
-            cache: false,
-            data: {
-                prosescekmessage: 1
-            },
-            success: function(data) {
-                //alert(data.a)
-                if (data.return === true) {
-                    clearInterval(intervalman);
-                    Swal.fire({
-                        title: '⚠️Maintenance',
-                        text: "Perkiraan waktu " + data.timeleft + " WIB",
-                        footer: '<b>Note: ' + data.text + '</b>',
-                        showConfirmButton: true,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                    })
-                }
-            }
-        });
-    }, 3000)
+    // var intervalman = setInterval(() => {
+    //     $.ajax({
+    //         url: "../function/getdata.php",
+    //         dataType: "JSON",
+    //         type: "POST",
+    //         cache: false,
+    //         data: {
+    //             prosescekmessage: 1
+    //         },
+    //         success: function(data) {
+    //             //alert(data.a)
+    //             if (data.return === true) {
+    //                 clearInterval(intervalman);
+    //                 Swal.fire({
+    //                     title: '⚠️Maintenance',
+    //                     text: "Perkiraan waktu " + data.timeleft + " WIB",
+    //                     footer: '<b>Note: ' + data.text + '</b>',
+    //                     showConfirmButton: true,
+    //                     allowOutsideClick: false,
+    //                     allowEscapeKey: false,
+    //                 })
+    //             }
+    //         }
+    //     });
+    // }, 3000)
 </script>
 <!-- Modal -->
 <div class="modal fade" id="versionaplikasi" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">

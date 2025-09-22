@@ -88,10 +88,6 @@ $file = fopen($filename, "r");
                                 <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size: 6pt !important;" onclick="$('#batchcreateplanningpengolahan').val('')"><img src="../asset/img/delete.png"> Clear</button>
                             </div>
                         </div>
-                        <!-- <div class="col-sm-2">
-                            <button type="button" class="btn btn-sm btn-outline-primary" style="font-size: 6pt !important;" onclick="konfirmbatchauto($('#productidcreateplanningpengolahan').val(),$('#jumlahresepcreateplanningpengolahan').val())"><img src="../asset/icon/matic.png"> Auto</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size: 6pt !important;" onclick="$('#batchcreateplanningpengolahan').val('')"><img src="../asset/img/delete.png"> Clear</button>
-                        </div> -->
                     </div>
                     <div class="form-group row mb-0">
                         <label for="expireddatecreateplanningpengolahan" class="col-sm-2 col-form-label">Expired Date</label>
@@ -108,9 +104,6 @@ $file = fopen($filename, "r");
                         <div class="col-sm-1">
                             <input type="number" id="jumlahresepcreateplanningpengolahan" class="form-control form-control-sm" aria-describedby="passwordHelpBlock" min="1" value="1">
                         </div>
-                        <!-- <div class="col-sm-2">
-                            <button type="button" class="btn btn-sm btn-outline-info" style="font-size: 6pt !important;" onclick="konfirmbatchauto($('#productidcreateplanningpengolahan').val())"><img src="../asset/icon/matic.png"> Bets Auto</button>
-                        </div> -->
                         <label for="kodemesinmixingcreateplanningpengolahan" class="col-sm-2 offset-5 col-form-label">No Mesin Mixing</label>
                         <div class="col-sm-2">
                             <div class="input-group mb-1">

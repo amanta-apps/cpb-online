@@ -1088,44 +1088,47 @@ if (isset($_POST["prosesstopprosestimbang"])) {
     echo $return;
 }
 if (isset($_POST["proseskonfirmbatchauto"])) {
-    $productid = $_POST["proseskonfirmbatchauto"][0];
-    $resep = $_POST["proseskonfirmbatchauto"][1];
+    $productid = $_POST["proseskonfirmbatchauto"][0] ?? null;
+    $resep = $_POST["proseskonfirmbatchauto"][1] ?? null;
     $return = false;
+    $bets_auto = [];
+    $z = 0;
 
-    $sql = mysqli_query($conn, "SELECT * FROM planning_pengolahan_subdetail WHERE Plant='$plant' AND
-                                                                                UnitCode='$unitcode' AND
-                                                                                ProductID='$productid' AND
-                                                                                NoProses='1' ORDER BY CreatedOn DESC LIMIT 1");
-    if (mysqli_num_rows($sql) != 0) {
-        $r = mysqli_fetch_array($sql);
-        $bets = $r['BatchNumber'];
+    if ($productid && $resep) {
+        $sql = mysqli_query($conn, "SELECT BatchNumber 
+                                    FROM planning_pengolahan_subdetail WHERE Plant='$plant' AND
+                                                                            UnitCode='$unitcode' AND
+                                                                            ProductID='$productid' AND
+                                                                            NoProses='1' ORDER BY CreatedOn DESC LIMIT 1");
+        if (mysqli_num_rows($sql) <> 0) {
+            $r = mysqli_fetch_array($sql);
+            $bets = $r['BatchNumber'];
 
-        $lenght = strlen($bets);
-        $a = ceil($resep / 2);
-        $return = '';
-        $bets_auto = array();
-        $z = 0;
-
-        $return = $bets;
-        $setlenght = $lenght - 2;
-        $bets_auto = [];
-        if ($a >= 1) {
-            while ($z < $a) {
-                $code = substr($return, 0, 2);
-                $bets_r = (int) substr($return, 2, $setlenght);
-                $bets_r += 1;
-                $return = $code . sprintf("%0" . $setlenght . "s", $bets_r);
-                array_push($bets_auto, $return);
-                $z += 1;
+            $lenght = strlen($bets);
+            $a = ceil($resep / 2);
+            $return = '';
+            $return = $bets;
+            $setlenght = $lenght - 2;
+            if ($a >= 1) {
+                while ($z < $a) {
+                    $code = substr($return, 0, 2);
+                    $bets_r = (int) substr($return, 2, $setlenght);
+                    $bets_r += 1;
+                    $return = $code . sprintf("%0" . $setlenght . "s", $bets_r);
+                    $bets_auto[] = $return;
+                    $z += 1;
+                }
             }
+            $return = true;
         }
-        $dump['test'] = $bets_r;
-        $dump['bets'] = $bets_auto;
-        $dump['return'] = true;
-    } else {
-        $dump['return'] = false;
+        $data = [
+            "test" => null,
+            "bets_last" => $bets ?? null,
+            "bets_next" => $bets_auto ?? null,
+            "return" => $return
+        ];
+        echo json_encode($data);
     }
-    echo json_encode($dump);
 }
 if (isset($_POST["prosesbatchauto"])) {
     $productid = $_POST["prosesbatchauto"][0];
@@ -1152,10 +1155,11 @@ if (isset($_POST["prosesbatchauto"])) {
             $z += 1;
         }
     }
-
-    $dump['bets'] = $bets_auto;
-    $dump['a'] = $setlenght;
-    echo json_encode($dump);
+    $data = [
+        "test" => null,
+        "bets" => $bets_auto ?? null
+    ];
+    echo json_encode($data);
 }
 
 // ---------------------------------------------------------
@@ -1956,144 +1960,122 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
     $return = false;
     $status = false;
 
-    $sql = mysqli_query($conn, "SELECT JmlTeoritis,KodeBahan FROM mapping_preparemixing WHERE Plant='$plant' AND
-                                                                        UnitCode='$unitcode' AND
-                                                                        ReffCode='$reffcode'");
-    if (mysqli_num_rows($sql) <> 0) {
-        while ($row = mysqli_fetch_array($sql)) {
-            $total = $row['JmlTeoritis'];
-            $kodebahan = $row['KodeBahan'];
-            // ----Proses 1
-            $jumlah = 0;
-            $query1 = mysqli_query($conn, "SELECT Jumlah FROM tb_detailprosesmixing WHERE Plant='$plant' AND
-                                                                        UnitCode='$unitcode' AND
-                                                                        NoProses='1' AND
-                                                                        Proses='1' AND
-                                                                        ReffCode='$reffcode' AND
-                                                                        KodeBahan='$kodebahan'");
-            if (mysqli_num_rows($query1) <> 0) {
-                while ($r = mysqli_fetch_array($query1)) {
-                    $jumlah = $jumlah + $r['Jumlah'];
+    mysqli_autocommit($conn, FALSE);
+    try {
+        $sql = mysqli_query($conn, "SELECT JmlTeoritis,KodeBahan 
+                                FROM mapping_preparemixing 
+                                WHERE Plant='$plant' 
+                                AND UnitCode='$unitcode' 
+                                AND ReffCode='$reffcode'");
+        if (mysqli_num_rows($sql) <> 0) {
+            while ($row = mysqli_fetch_array($sql)) {
+                $total = $row['JmlTeoritis'];
+                $kodebahan = $row['KodeBahan'];
+                $jumlah = 0; //--->> Proses 1
+                $query = mysqli_query($conn, "SELECT Jumlah 
+                                           FROM tb_detailprosesmixing 
+                                           WHERE Plant='$plant' 
+                                           AND UnitCode='$unitcode' 
+                                           AND NoProses=1 
+                                           AND Proses=1 
+                                           AND ReffCode='$reffcode' 
+                                           AND KodeBahan='$kodebahan'");
+                if (mysqli_num_rows($query) <> 0) {
+                    while ($r = mysqli_fetch_array($query)) {
+                        $jumlah += $r['Jumlah'];
+                        $a = $r['Jumlah'];
+                    }
+                    $jumlah = floor($jumlah);
+                    if ($jumlah != $total) {
+                        throw new Exception("List bahan pengolahan belum komplit (Proses 1).");
+                    }
                 }
-                $jumlah = floor($jumlah);
-                if ($jumlah == $total) {
-                    $status = true;
-                } else {
-                    $msg = 'List bahan pengolahan belum Komplit';
+                $jumlah = 0; //--->> Proses 2
+                $query = mysqli_query($conn, "SELECT Jumlah 
+                                                FROM tb_detailprosesmixing 
+                                                WHERE Plant='$plant' 
+                                                AND UnitCode='$unitcode' 
+                                                AND NoProses='1' 
+                                                AND Proses='2' 
+                                                AND ReffCode='$reffcode' 
+                                                AND KodeBahan='$kodebahan'");
+                if (mysqli_num_rows($query) <> 0) {
+                    while ($r = mysqli_fetch_array($query)) {
+                        $jumlah += $r['Jumlah'];
+                    }
+                    $jumlah = floor($jumlah);
+                    if ($jumlah != $total) {
+                        throw new Exception("List bahan pengolahan belum komplit (Proses 2).");
+                    }
                 }
             }
-
-            $jumlah = 0;
-            $query2 = mysqli_query($conn, "SELECT Jumlah FROM tb_detailprosesmixing WHERE Plant='$plant' AND
-                                                                        UnitCode='$unitcode' AND
-                                                                        NoProses='1' AND
-                                                                        Proses='2' AND
-                                                                        ReffCode='$reffcode' AND
-                                                                        KodeBahan='$kodebahan'");
-            if (mysqli_num_rows($query2) <> 0) {
-                while ($r = mysqli_fetch_array($query2)) {
-                    $jumlah = $jumlah + $r['Jumlah'];
-                }
-                $jumlah = floor($jumlah);
-                if ($jumlah == $total) {
-                    $status = true;
-                } else {
-                    $msg = 'List bahan pengolahan belum Komplit';
-                }
-            }
+        } else {
+            throw new Exception("Masukan bahan-bahan mixing");
         }
-    } else {
-        $msg = 'Input kode bahan';
-    }
 
-    $status = false;
-    $sql = mysqli_query($conn, "SELECT Items FROM planning_pengolahan_detail WHERE Plant='$plant' AND UnitCode='$unitcode'
-                                                                                            AND CreatedBy='$createdby'
-                                                                                            AND (PlanningNumber is null or PlanningNumber='') 
-                                                                                            ORDER BY Items DESC");
-    if (mysqli_num_rows($sql) == 0) {
-        $item = 1;
-    } else {
-        $r = mysqli_fetch_array($sql);
-        $item = $r['Items'];
-    }
-    $item = mysqli_num_rows($sql) + 1;
-    $sql = mysqli_query($conn, "INSERT INTO planning_pengolahan_detail (Plant,
-                                                                            UnitCode,
-                                                                            Years,
-                                                                            Items,
-                                                                            ProductID,
-                                                                            BatchNumber,
-                                                                            ExpiredDate,
-                                                                            ResourceIDMix,
-                                                                            MixingDate,
-                                                                            JumlahResep,
-                                                                            ReffCode,
-                                                                            CreatedBy,
-                                                                            CreatedOn) 
-                                VALUES('$plant',
-                                        '$unitcode',
-                                        '$years',
-                                        '$item',
-                                        '$productid',
-                                        '$batch',
-                                        '$ed',
-                                        '$mesin_mix',
-                                        '$tglmixing',
-                                        '$jumlahresep',
-                                        '$reffcode',
-                                        '$createdby',
-                                        '$createdon')");
-    if ($sql === true) {
-        $status = true;
-    }
-    if ($status) {
-        mysqli_query($conn, "DELETE FROM planning_pengolahan_header WHERE Plant='$plant' AND 
-                                                                                UnitCode='$unitcode' AND
-                                                                                PlanningNumber='' AND 
-                                                                                CreatedBy='$createdby'");
-        mysqli_query($conn, "INSERT INTO planning_pengolahan_header (Plant,
-                                                                        UnitCode,
-                                                                        Years,Shift,
-                                                                        Addreviewer,
-                                                                        CreatedFor,
-                                                                        CreatedOn,
-                                                                        CreatedBy)
-                            VALUES('$plant',
-                                    '$unitcode',
-                                    '$years',
-                                    '$shift',
-                                    '$reviewer_add',
-                                    '$createdfor',
-                                    '$createdon',
-                                    '$createdby')");
-        $status = true;
-    }
-    // <------ Edit 21 Agustus 2025 -------> REVISI Pemekaran detail proses mixing berdasarkan batch
-    $batch_loop = explode(",", $batch);
-    $jumlah_loop = count($batch_loop);
+        $sql = mysqli_query($conn, "SELECT Items 
+                                    FROM planning_pengolahan_detail 
+                                    WHERE Plant='$plant' 
+                                    AND UnitCode='$unitcode'
+                                    AND CreatedBy='$createdby'
+                                    AND (PlanningNumber IS NULL OR PlanningNumber='') 
+                                    ORDER BY Items DESC");
+        $item = (mysqli_num_rows($sql) == 0) ? 1 : mysqli_num_rows($sql) + 1;
 
-    if ($status) {
+        $sql = "INSERT INTO planning_pengolahan_detail
+                    (Plant, UnitCode, Years, Items, ProductID,
+                    BatchNumber, ExpiredDate, ResourceIDMix, MixingDate,
+                    JumlahResep, ReffCode, CreatedBy, CreatedOn)
+                     VALUES (
+                    '$plant','$unitcode','$years','$item','$productid',
+                    '$batch','$ed','$mesin_mix','$tglmixing',
+                    '$jumlahresep','$reffcode','$createdby','$createdon'
+                )";
+        if (!mysqli_query($conn, $sql)) {
+            throw new Exception("Gagal insert planning_pengolahan_detail: " . mysqli_error($conn));
+        }
+
+        $del = "DELETE FROM planning_pengolahan_header 
+            WHERE Plant='$plant' AND UnitCode='$unitcode' 
+            AND PlanningNumber='' AND CreatedBy='$createdby'";
+        if (!mysqli_query($conn, $del)) {
+            throw new Exception("Gagal delete planning_pengolahan_header: " . mysqli_error($conn));
+        }
+
+        $ins = "INSERT INTO planning_pengolahan_header (
+                    Plant, UnitCode, Years, Shift, Addreviewer,
+                    CreatedFor, CreatedOn, CreatedBy
+                ) VALUES (
+                    '$plant','$unitcode','$years','$shift','$reviewer_add',
+                    '$createdfor','$createdon','$createdby'
+                )";
+        if (!mysqli_query($conn, $ins)) {
+            throw new Exception("Gagal insert planning_pengolahan_header: " . mysqli_error($conn));
+        }
+
+        $batch_loop  = explode(",", $batch);
+        $jumlah_loop = count($batch_loop);
+
         for ($i = 0; $i < $jumlah_loop; $i++) {
-            $query = mysqli_query($conn, "SELECT * FROM tb_detailprosesmixing WHERE Plant='$plant' AND
-                                                                            UnitCode='$unitcode' AND
-                                                                            -- Proses='1' AND
-                                                                            ReffCode='$reffcode'");
+            $query = mysqli_query($conn, "SELECT * FROM tb_detailprosesmixing 
+                                                    WHERE Plant='$plant' 
+                                                    AND UnitCode='$unitcode' 
+                                                    AND ReffCode='$reffcode'");
             while ($r = mysqli_fetch_array($query)) {
-                mysqli_query($conn, "INSERT INTO tb_subdetailprosesmixing (Plant,
-                                                                UnitCode,
-                                                                ProductID,
-                                                                NoProses,
-                                                                Proses,
+                $sql = "INSERT INTO tb_subdetailprosesmixing (Plant, 
+                                                                UnitCode, 
+                                                                ProductID, 
+                                                                NoProses, 
+                                                                Proses, 
                                                                 UrutanProses,
                                                                 KodeBahan,
-                                                                ReffCode,
-                                                                Jumlah,
-                                                                BatchNumber,
+                                                                ReffCode, 
+                                                                Jumlah, 
+                                                                BatchNumber, 
                                                                 Satuan,
-                                                                UsedTo,
-                                                                CreatedOn,
-                                                                CreatedBy)
+                                                                UsedTo, 
+                                                                CreatedOn, 
+                                                                CreatedBy) 
                             VALUES ('$r[Plant]',
                                     '$r[UnitCode]',
                                     '$r[ProductID]',
@@ -2103,19 +2085,30 @@ if (isset($_POST['prosessavecreateplanningpengolahan'])) {
                                     '$r[KodeBahan]',
                                     '$r[ReffCode]',
                                     '$r[Jumlah]',
-                                    '$batch_loop[$i]',
+                                    '{$batch_loop[$i]}',
                                     '$r[Satuan]',
                                     '$r[UsedTo]',
                                     '$r[CreatedOn]',
-                                    '$r[CreatedBy]')");
+                                    '$r[CreatedBy]')";
+                if (!mysqli_query($conn, $sql)) {
+                    throw new Exception("Gagal insert tb_subdetailprosesmixing: " . mysqli_error($conn));
+                }
             }
         }
+
+        mysqli_commit($conn);
         $return = true;
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $return = false;
+        $msg = $e->getMessage();
+        errorlog($msg);
+    } finally {
+        mysqli_autocommit($conn, TRUE);
     }
-    // <------ End ------->
 
     $data = [
-        "msg" => $msg,
+        "msg"    => $msg,
         "status" => $status,
         "return" => $return
     ];
@@ -2467,7 +2460,6 @@ if (isset($_POST['prosessimpancreateplanningpengolahan'])) { // --- > selesai pl
                 $realbatch =  $drop_bets[$z];
                 // ------> Get Kode Planning
                 $inspectionlot = getautokode('prueflos');
-                // ---
                 // ------> Analisa Pengemasan Sekunder
                 for ($noproses_qc = 1; $noproses_qc < 3; $noproses_qc++) {
                     mysqli_query($conn, "INSERT INTO insp_pengolahan_header(Plant,
@@ -2618,8 +2610,284 @@ if (isset($_POST['prosessimpancreateplanningpengolahan'])) { // --- > selesai pl
         mysqli_query($conn, "UPDATE nriv SET Current='$inspectionlot' WHERE NumberRangeType='prueflos' AND Years='$years'");
     }
 
-    // $dump['reviewer'] = $reviewer_add;
     echo json_encode($dump);
+
+    // $kodeplanning = getautokode('Planning2');
+    // mysqli_autocommit($conn, FALSE);
+
+    // try {
+    //     // --------> Update Head Temp
+    //     if (!mysqli_query($conn, "UPDATE planning_pengolahan_header 
+    //                                 SET PlanningNumber='$kodeplanning',
+    //                                     Shift='$shift',
+    //                                     Addreviewer='$reviewer_add',
+    //                                     CreatedFor='$createdfor'
+    //                                 WHERE Plant='$plant' 
+    //                                 AND UnitCode='$unitcode' 
+    //                                 AND PlanningNumber='' 
+    //                                 AND CreatedBy='$createdby'")) {
+    //         throw new Exception("Gagal update planning_pengolahan_header: " . mysqli_error($conn));
+    //     }
+
+    //     $sql = mysqli_query($conn, "SELECT * 
+    //                             FROM planning_pengolahan_detail 
+    //                             WHERE Plant='$plant' 
+    //                               AND UnitCode='$unitcode' 
+    //                               AND PlanningNumber='' 
+    //                               AND CreatedBy='$createdby' 
+    //                             ORDER BY Items ASC");
+
+    //     if (mysqli_num_rows($sql) != 0) {
+    //         $i = 1;
+    //         while ($r = mysqli_fetch_array($sql)) {
+    //             if (!mysqli_query($conn, "UPDATE planning_pengolahan_detail 
+    //                                         SET PlanningNumber ='$kodeplanning' 
+    //                                             WHERE Plant='$plant' 
+    //                                             AND UnitCode='$unitcode' 
+    //                                             AND (PlanningNumber='' or PlanningNumber is null) 
+    //                                             AND Years='$r[Years]' 
+    //                                             AND Items='$i' 
+    //                                             AND ProductID='$r[ProductID]' 
+    //                                             AND CreatedBy='$createdby'")) {
+    //                 throw new Exception("Gagal update planning_pengolahan_detail: " . mysqli_error($conn));
+    //             }
+    //             if (!mysqli_query($conn, "UPDATE table_bahanreproses 
+    //                                     SET PlanningNumber ='$kodeplanning' 
+    //                                     WHERE Plant='$plant' 
+    //                                       AND UnitCode='$unitcode' 
+    //                                       AND (PlanningNumber='' or PlanningNumber is null) 
+    //                                       AND Years='$r[Years]' 
+    //                                       AND ProductID='$r[ProductID]' 
+    //                                       AND CreatedBy='$createdby'")) {
+    //                 throw new Exception("Gagal update table_bahanreproses: " . mysqli_error($conn));
+    //             }
+
+    //             if (!mysqli_query($conn, "INSERT INTO tbl_hasiltimbang_header 
+    //                                             (Plant, 
+    //                                             UnitCode, 
+    //                                             PlanningNumber, 
+    //                                             Years, 
+    //                                             Items, 
+    //                                             ProductID, 
+    //                                             ExpiredDate, 
+    //                                             ResourceIDMix, 
+    //                                             MixingDate, 
+    //                                             CreatedOn, 
+    //                                             CreatedBy)
+    //                                             VALUES('$plant',
+    //                                                     '$unitcode',
+    //                                                     '$kodeplanning',
+    //                                                     '$r[Years]',
+    //                                                     '$i',
+    //                                                     '$r[ProductID]',
+    //                                                     '$r[ExpiredDate]',
+    //                                                     '$r[ResourceIDMix]',
+    //                                                     '$r[MixingDate]',
+    //                                                     '$createdon',
+    //                                                     '$createdby')")) {
+    //                 throw new Exception("Gagal insert tbl_hasiltimbang_header: " . mysqli_error($conn));
+    //             }
+
+    //             // Loop batch number
+    //             $drop_bets = explode(',', $r['BatchNumber']);
+    //             $jml_batch = count($drop_bets);
+
+    //             for ($z = 0; $z < $jml_batch; $z++) {
+    //                 $realbatch =  $drop_bets[$z];
+    //                 $inspectionlot = getautokode('prueflos');
+    //                 if (!mysqli_query($conn, "UPDATE nriv SET Current='$inspectionlot' WHERE NumberRangeType='prueflos' AND Years='$years'")) {
+    //                     throw new Exception("Gagal update nriv prueflos: " . mysqli_error($conn));
+    //                 }
+
+    //                 for ($noproses_qc = 1; $noproses_qc < 3; $noproses_qc++) {
+    //                     if (!mysqli_query($conn, "INSERT INTO insp_pengolahan_header 
+    //                                                     (Plant, 
+    //                                                     UnitCode, 
+    //                                                     InspectionLot, 
+    //                                                     Lotyears, 
+    //                                                     NoProses, 
+    //                                                     ProductID, 
+    //                                                     BatchNumber, 
+    //                                                     PlanningNumber, 
+    //                                                     Years, 
+    //                                                     StatsY, 
+    //                                                     CreatedOn, 
+    //                                                     CreatedBy)
+    //                                             VALUES('$plant',
+    //                                                     '$unitcode',
+    //                                                     '$inspectionlot',
+    //                                                     '$years',
+    //                                                     '$noproses_qc',
+    //                                                     '$r[ProductID]',
+    //                                                     '$realbatch',
+    //                                                     '$kodeplanning',
+    //                                                     '$r[Years]',
+    //                                                     'CRTD',
+    //                                                     '$createdon',
+    //                                                     '$createdby')")) {
+    //                         throw new Exception("Gagal insert insp_pengolahan_header: | Error: " . mysqli_error($conn));
+    //                     }
+
+    //                     $cek_spec = mysqli_query($conn, "SELECT A.ProductID, 
+    //                                                             A.MIC, 
+    //                                                             B.Descriptions, 
+    //                                                             B.FullyDesc 
+    //                                                     FROM assign_mic AS A 
+    //                                                     INNER JOIN master_inspection AS B ON A.MIC = B.MIC 
+    //                                                     WHERE A.Plant='$plant' 
+    //                                                       AND A.UnitCode='$unitcode' 
+    //                                                       AND A.ProductID='$r[ProductID]'");
+
+    //                     if (mysqli_num_rows($cek_spec) <> 0) {
+    //                         while ($c = mysqli_fetch_array($cek_spec)) {
+    //                             if (!mysqli_query($conn, "INSERT INTO insp_pengolahan_detail
+    //                                                     (Plant,
+    //                                                     UnitCode,
+    //                                                     InspectionLot,
+    //                                                     Lotyears,
+    //                                                     NoProses,
+    //                                                     MIC,
+    //                                                     Descriptions,
+    //                                                     FullyDesc,
+    //                                                     ProductID,
+    //                                                     BatchNumber,
+    //                                                     CreatedOn,
+    //                                                     CreatedBy)
+    //                                                     VALUES('$plant',
+    //                                                     '$unitcode',
+    //                                                     '$inspectionlot',
+    //                                                     '$years',
+    //                                                     '$noproses_qc',
+    //                                                     '$c[MIC]',
+    //                                                     '$c[Descriptions]',
+    //                                                     '$c[FullyDesc]',
+    //                                                     '$c[ProductID]',
+    //                                                     '$realbatch',
+    //                                                     '$createdon',
+    //                                                     '$createdby')")) {
+    //                                 throw new Exception("Gagal insert insp_pengolahan_detail: "  . mysqli_error($conn));
+    //                             }
+
+    //                             if (!mysqli_query($conn, "UPDATE insp_pengolahan_header 
+    //                                                     SET StatsY='REL' 
+    //                                                     WHERE Plant='$plant' 
+    //                                                       AND UnitCode='$unitcode' 
+    //                                                       AND InspectionLot='$inspectionlot' 
+    //                                                       AND Lotyears='$years' 
+    //                                                       AND ProductID='$c[ProductID]' 
+    //                                                       AND BatchNumber='$realbatch' 
+    //                                                       AND NoProses='$noproses_qc'")) {
+    //                                 throw new Exception("Gagal update insp_pengolahan_header: " . mysqli_error($conn));
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+
+    //                 for ($k = 1; $k <= $jmlproses; $k++) {
+    //                     for ($w = 1; $w <= 7; $w++) {
+    //                         if (!mysqli_query($conn, "INSERT INTO tbl_hasiltimbang_detail 
+    //                                                     (Plant,
+    //                                                     UnitCode,
+    //                                                     PlanningNumber,
+    //                                                     Years,
+    //                                                     Items,
+    //                                                     ProductID,
+    //                                                     BatchNumber,
+    //                                                     NoProses,
+    //                                                     NoTong,
+    //                                                     CreatedOn,
+    //                                                     CreatedBy)
+    //                                                 VALUES('$plant',
+    //                                                 '$unitcode',
+    //                                                 '$kodeplanning',
+    //                                                 '$r[Years]',
+    //                                                 '$i',
+    //                                                 '$r[ProductID]',
+    //                                                 '$realbatch',
+    //                                                 '$k',
+    //                                                 '$w',
+    //                                                 '$createdon',
+    //                                                 '$createdby')")) {
+    //                             throw new Exception("Gagal insert tbl_hasiltimbang_detail: " . mysqli_error($conn));
+    //                         }
+    //                     }
+    //                 }
+
+    //                 $indexrow = 1;
+    //                 $getindexrow = mysqli_query($conn, "SELECT IndexRow FROM tb_eraseprosespengolahan 
+    //                                                     WHERE Plant='$plant' 
+    //                                                       AND UnitCode='$unitcode' 
+    //                                                       AND PlanningNumber='$kodeplanning' 
+    //                                                       AND Years='$r[Years]' 
+    //                                                     ORDER BY IndexRow DESC");
+    //                 if (mysqli_num_rows($getindexrow) != 0) {
+    //                     $show_getindexrow = mysqli_fetch_array($getindexrow);
+    //                     $indexrow = $show_getindexrow['IndexRow'] + 1;
+    //                 }
+
+    //                 if (!mysqli_query($conn, "INSERT INTO tb_eraseprosespengolahan 
+    //                                                         (Plant,
+    //                                                         UnitCode,
+    //                                                         PlanningNumber,
+    //                                                         Years,
+    //                                                         IndexRow,
+    //                                                         ProductID,
+    //                                                         BatchNumber,
+    //                                                         JmlProses,
+    //                                                         CreatedOn,
+    //                                                         CreatedBy)
+    //                                             VALUES('$plant',
+    //                                             '$unitcode',
+    //                                             '$kodeplanning',
+    //                                             '$r[Years]',
+    //                                             '$indexrow',
+    //                                             '$r[ProductID]',
+    //                                             '$realbatch',
+    //                                             '$jmlproses',
+    //                                             $createdon',
+    //                                             '$createdby')")) {
+    //                     throw new Exception("Gagal insert tb_eraseprosespengolahan: " . mysqli_error($conn));
+    //                 }
+    //             }
+    //             $i++;
+    //         }
+
+    //         if (!mysqli_query($conn, "UPDATE nriv 
+    //                                     SET Current='$kodeplanning' 
+    //                                     WHERE NumberRangeType='Planning2' 
+    //                                     AND Years='$years'")) {
+    //             throw new Exception("Gagal update nriv planning: " . mysqli_error($conn));
+    //         }
+
+    //         // Reviewer
+    //         for ($i = 1; $i <= $reviewer_lenght; $i++) {
+    //             if ($reviewer_lenght > 1) {
+    //                 setreviewerpartial('planning_pengolahan', $kodeplanning, $years, $reviewer[($i - 1)]);
+    //             } else {
+    //                 $rev = str_replace(",", "", $reviewer);
+    //                 setreviewerpartial('planning_pengolahan', $kodeplanning, $years, $rev[($i - 1)]);
+    //             }
+    //         }
+    //         setreviewertambahan('planning_pengolahan', $kodeplanning, $years, $reviewer_add, $reviewer_lenght);
+
+    //         $dump['status'] = true;
+    //         $dump['planningnumber'] = $kodeplanning;
+    //         $dump['years'] = $years;
+
+    //         mysqli_commit($conn);
+    //         $msg = "Data Tersimpan";
+    //     }
+    // } catch (Exception $e) {
+    //     mysqli_rollback($conn);
+    //     $dump['status'] = false;
+    //     $dump['error'] = $e->getMessage();
+    //     errorlog($e->getMessage());
+    //     $msg = $e->getMessage();
+    // } finally {
+    //     mysqli_autocommit($conn, TRUE);
+    // }
+    // $dump["msg"] = $msg;
+    // echo json_encode($dump);
 }
 if (isset($_POST['prosesdeletedatareprosescreateplanningpengolahan'])) {
     $productid = $_POST['prosesdeletedatareprosescreateplanningpengolahan'][0];
