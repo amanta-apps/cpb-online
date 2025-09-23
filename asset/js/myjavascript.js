@@ -172,6 +172,16 @@ function topFunction() {
   document.body.scrollTop = 0;
   document.documentElement.scrollTop = 0;
 }
+function msgs(iconmsgsukses='success',msgsukses='Tersimpan', time=3000) {
+  Swal.fire({
+    icon: iconmsgsukses,
+    text: msgsukses,
+    showConfirmButton: false,
+    focusConfirm: false,
+    showCloseButton: false,
+  })
+  return
+}
 
 
 // ---------->> Transaksi - Login & Logout
@@ -10385,49 +10395,63 @@ function submitstartlacakplanning() {
 
 //------------------Nomor Lot-----------------------------
 function simpandatanomorlot() {
-  var nomorlot = $('#nomorlotuploadnomorlot').val()
-  var kodesupplier = $('#kodesuppliernomorlot').val()
-  var namasupplier = $('#namasuppliernomorlot').val()
-  var keterangan = $('#keterangannomorlot').val()
-  var join = $('#joinnomorlot').val()
+  let nomorlot     = $("#nomorlotuploadnomorlot").val();
+  let kodesupplier = $("#kodesuppliernomorlot").val();
+  let namasupplier = $("#namasuppliernomorlot").val();
+  let keterangan   = $("#keterangannomorlot").val();
+  let join         = $("#joinnomorlot").val();
 
-  if (nomorlot == '' || kodesupplier == '' || namasupplier == '') {
-    missingparameter()
-    return
+  if (!nomorlot || !kodesupplier || !namasupplier) {
+    missingparameter();
+    return;
   }
+
+  let formData = new FormData();
+  const files = $("#lampiran").prop("files");
+
+  const maxSize = 3 * 1024 * 1024;
+  const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.size > maxSize) {
+      msgs('info',"File " + file.name + " terlalu besar! Maksimal 3MB.",3000)
+      return;
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      msgs('info',"File " + file.name + " File bukan image.",3000)
+      return;
+    }
+    formData.append("lampiran[]", files[i]);
+  }
+  formData.append("nomorlot", nomorlot);
+  formData.append("kodesupplier", kodesupplier);
+  formData.append("namasupplier", namasupplier);
+  formData.append("keterangan", keterangan);
+  formData.append("join", join);
+  formData.append("typess", "document_nomorlot");
   $.ajax({
-    url: "../function/getdata.php",
+    url: "../function/uploaddata.php",
+    dataType: "JSON",
     type: "POST",
-    cache: false,
-    data: {
-      "prosessimpandatanomorlot": [nomorlot,kodesupplier, 
-        namasupplier,keterangan,join]
-    },
-    success: function (data) {
-      if (data == 1) {
-        Swal.fire({
-          title: "Success",
-          text: "Data Tersimpan",
-          icon: "success",
-          showConfirmButton: false,
-        })
-        setTimeout(function () {
-          location.reload()  
-        }, 1500);
-      } else {
-        Swal.fire({
-          title: "Oops..",
-          Text: "Data Gagal Tersimpan",
-          icon: "error",
-          showConfirmButton: true,
-        })
+    data: formData,
+    processData: false,
+    contentType: false,
+    success: function(data) {
+      if (data.return == 1) {
+          msgs()
+          setTimeout(() => {
+            location.reload()
+          }, data.time);
+      }else{
+        msgs(data.iconmsgs,data.msgs,data.time)
       }
     },
   });
 }
 function deletedatanomorlot(nomorlot) {
   Swal.fire({
-    title: 'Are you sure?',
     text: "Delete Nomor Lot " + nomorlot,
     icon: 'warning',
     showCancelButton: true,
@@ -10443,31 +10467,31 @@ function deletedatanomorlot(nomorlot) {
       document.getElementById('joinnomorlot').value=''
       $.ajax({
         url: "../function/getdata.php",
+        dataType: "JSON",
         type: "POST",
         cache: false,
         data: {
           "prosesdeletedatanomorlot": nomorlot
         },
         success: function (data) {
-          if (data == 1) {
+          if (data.return == 1) {
             Swal.fire({
-              title: "Success",
-              text: "Data Terhapus",
-              icon: "success",
+              text: data.msg,
+              icon: data.icon_s,
               showConfirmButton: false,
             })
             setTimeout(function () {
               location.reload();    
-            }, 1500);
+            }, data.time);
           } else {
             Swal.fire({
-              Text: "Data Gagal Terhapus",
-              icon: "error",
+              text: data.msg,
+              icon: data.icon_e,
               showConfirmButton: false,
             })
             setTimeout(function () {
               location.reload();
-            }, 1500);
+            }, data.time);
           }
         },
       });  
@@ -10497,9 +10521,29 @@ function selectsuppliernomorlot(kodesupplier,namasupplier,keterangan) {
   $('#kodesuppliernomorlot').val(kodesupplier)
   $('#namasuppliernomorlot').val(namasupplier)
   $('#keterangannomorlot').val(keterangan)
-  document.getElementById('hiddenketerangannomorlot').hidden=false
-  document.getElementById('namasuppliernomorlot').setAttribute('readonly',true)
+  // document.getElementById('hiddenketerangannomorlot').hidden=false
+  // document.getElementById('namasuppliernomorlot').setAttribute('readonly',true)
+  // document.getElementById('keterangannomorlot').setAttribute('readonly',true)
   $('#searchkodesuppliernomorlot').modal('hide')
+}
+function getdatasupplier(kodesupplier) {
+  $('#kodesuppliernomorlot').val(null)
+  $('#namasuppliernomorlot').val(null)
+   $.ajax({
+    url: "../function/getdata.php",
+    dataType: "JSON",
+    type: "POST",
+    cache: false,
+    data: {
+      "prosesgetdatasupplier": kodesupplier
+    },
+    success: function (data) {
+      if (data.return == 1) {
+          $('#kodesuppliernomorlot').val(data.id)
+          $('#namasuppliernomorlot').val(data.desc)
+      }
+    },
+  });
 }
 function execnomorlot() {
   var planningnumber = $('#setplanningnumberprosestopack').val()

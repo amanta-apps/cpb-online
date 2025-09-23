@@ -8,6 +8,9 @@ $unitcode = $_SESSION['unitcode'];
 $createdon = date("Y-m-d H:i:s");
 $createdby = $_SESSION['userid'];
 $type_of_transaksi = $_POST['typess'];
+$time = 1500;
+$NewImageName = null;
+$data = array();
 
 if ($type_of_transaksi == 'analisapengemasanprimer') {
     $sql = mysqli_query($conn, "SELECT * FROM master_directions WHERE Plant='$plant' AND UnitCode='$unitcode' AND Items=1");
@@ -63,4 +66,97 @@ if ($type_of_transaksi == 'analisapengemasanprimer') {
         }
     }
     echo $return;
+} elseif ($type_of_transaksi == 'document_nomorlot') {
+    try {
+        mysqli_commit($conn, FALSE);
+        // mysqli_begin_transaction($conn);
+        $sql = mysqli_query($conn, "SELECT Directions FROM master_directions WHERE Plant='$plant' AND UnitCode='$unitcode' AND Items=2");
+        if (mysqli_num_rows($sql) <> 0) {
+            $r   = mysqli_fetch_array($sql);
+            $dir = $r['Directions'];
+        }
+        $temp = $dir;
+        if (!file_exists($temp)) {
+            mkdir($temp, 0777, true);
+        }
+
+        $nomorlot        = $_POST['nomorlot'] ?? '';
+        $kodesupplier    = $_POST['kodesupplier'] ?? '';
+        $namasupplier    = $_POST['namasupplier'] ?? '';
+        $keterangan      = $_POST['keterangan'] ?? '';
+        $join            = $_POST['join'] ?? '';
+
+        $return    = false;
+        $iconmsgs  = "error";
+        $msg      = "Gagal simpan data";
+
+        // =============== Upload file (jika ada) ===============
+        if (!empty($_FILES['lampiran']['name'][0])) {
+            $uploadedFiles = [];
+            foreach ($_FILES['lampiran']['name'] as $key => $name) {
+                $tmpName = $_FILES['lampiran']['tmp_name'][$key];
+                $error   = $_FILES['lampiran']['error'][$key];
+                $ImageName = $_FILES['lampiran']['name'];
+                $ImageType  = $_FILES['lampiran']['type'];
+
+                // if ($error === UPLOAD_ERR_OK) {
+                $NewImageName   = date('dmYHis')  . '^^' . $name;
+                $targetFile = $temp . $NewImageName;
+
+                if (move_uploaded_file($tmpName, $targetFile)) {
+                    $query = mysqli_query($conn, "INSERT INTO table_datadoclot
+                                                    (nomorlot, documenaddress, createdby, createdon) 
+                                                    VALUES 
+                                                    ('$nomorlot','$NewImageName','$createdby','$createdon')");
+                    $return = true;
+                    $uploaded[] = $NewImageName;
+                }
+            }
+        }
+
+        // =============== Insert header ===============
+        $insert = mysqli_query($conn, "INSERT INTO data_lot 
+                                                (Plant, 
+                                                UnitCode, 
+                                                NomorLot, 
+                                                KodeSupplier, 
+                                                NamaSupplier, 
+                                                Keterangan, 
+                                                Joins, 
+                                                CreatedBy, 
+                                                CreatedOn) 
+                                VALUES('$plant',
+                                '$unitcode',
+                                '$nomorlot',
+                                '$kodesupplier',
+                                '$namasupplier',
+                                '$keterangan',
+                                '$join',
+                                '$createdby',
+                                '$createdon')");
+        if (!$insert) {
+            throw new Exception("Gagal insert header: " . mysqli_error($conn));
+        }
+
+        // Kalau sampai sini berarti semua berhasil
+        mysqli_commit($conn);
+        $msg     = "Data Tersimpan";
+        $iconmsgs = "success";
+        $return   = true;
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $msg     = $e->getMessage();
+        $iconmsgs = "error";
+        $return   = false;
+        errorlog($e->getMessage());
+    }
+
+    $data = [
+        "iconmsgs"  => $iconmsgs,
+        "msg"      => $msg,
+        "time"      => $time,
+        "return"    => $return
+    ];
+
+    echo json_encode($data);
 }

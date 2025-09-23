@@ -15,7 +15,7 @@
                         <hr>
                     </div>
                 </div>
-                <div class="form-group row mb-0">
+                <!-- <div class="form-group row mb-0">
                     <label for="kodesuppliernomorlot" class="col-sm-4 col-form-label">Kode Supplier</label>
                     <div class="col-sm-4">
                         <div class="input-group mb-1">
@@ -23,17 +23,25 @@
                             <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon2" data-bs-toggle="modal" data-bs-target="#searchkodesuppliernomorlot"><span><img src="../asset/icon/cari.png"></span></button>
                         </div>
                     </div>
+                </div> -->
+                <div class="form-group row mb-0">
+                    <label for="namasuppliernomorlot2" class="col-sm-4 col-form-label">Kode Supplier</label>
+                    <div class="col-sm-8">
+                        <select name="" id="" class="select2" onchange="getdatasupplier(this.value)">
+                            <option value=""></option>
+                            <?php
+                            $query = mysqli_query($conn, "SELECT Idpemasok,Descriptions FROM data_pemasok");
+                            while ($r = mysqli_fetch_array($query)) { ?>
+                                <option value="<?= $r['Idpemasok'] ?>"><?= $r['Descriptions'] ?></option>
+                            <?php
+                            } ?>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group row mb-0">
                     <label for="namasuppliernomorlot" class="col-sm-4 col-form-label">Nama Supplier</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" id="namasuppliernomorlot">
-                    </div>
-                </div>
-                <div class="form-group row mb-1" id="hiddenketerangannomorlot" hidden>
-                    <label for="keterangannomorlot" class="col-sm-4 col-form-label">Keterangan</label>
-                    <div class="col-sm-8">
-                        <textarea class="form-control" name="" id="keterangannomorlot" rows=3 readonly></textarea>
+                        <input type="text" class="form-control form-control-sm" id="namasuppliernomorlot" readonly>
                     </div>
                 </div>
                 <div class="form-group row mb-0">
@@ -44,17 +52,16 @@
                 </div>
             </div>
             <div class="col-sm-6">
-                <div class="form-group row mb-0">
-                    <label for="uploaddatanomorlot" class="col-sm-4 col-form-label">Upload Data <sup style="font-size: 5pt;">(Optional)</sup></label>
-                    <div class="col-sm-8">
-                        <input type="file" class="form-control form-control-sm" id="uploaddatanomorlot">
-                    </div>
+                <div class="col-sm-12">
+                    <input type="file" id="lampiran" name="lampiran[]" multiple class="form-control mb-2" accept="image/*">
+                    <ol id="filelist" class="mt-2"></ol>
+                    <input type="text" class="form-control form-control-sm" id="descimgdraftsp" readonly hidden>
                 </div>
             </div>
-        </div>
-        <div class="form-group row">
-            <div class="col-sm-2 offset-2 mt-2">
-                <button type="button" class="btn btn-outline-success btn-sm" onclick="simpandatanomorlot()"><img src="../asset/icon/save.png"> Simpan</button>
+            <div class="form-group row">
+                <div class="col-sm-2 offset-2 mt-2">
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="simpandatanomorlot()"><img src="../asset/icon/save.png"> Simpan</button>
+                </div>
             </div>
         </div>
     </div>
@@ -62,7 +69,7 @@
     <table id="dmenu" class="table table-striped table-sm" style="width:100%">
         <thead class="bg-dark text-white">
             <tr>
-                <th></th>
+                <th>#</th>
                 <th>Nomor Lot</th>
                 <th>Kode Supplier</th>
                 <th>Nama Supplier</th>
@@ -70,10 +77,6 @@
                 <th>Join</th>
                 <th>Status</th>
                 <th>Created On</th>
-                <?php
-                if ($_SESSION['personnelnumber'] == '90003560') { ?>
-                    <th>Act</th>
-                <?php } ?>
             </tr>
         </thead>
         <tbody>
@@ -84,21 +87,16 @@
             ?>
                 <tr>
                     <td>
-                        <a href="#" class="badge text-dark zoom text-decoration-none bg-transparent" onclick="message(1)"><img src="../asset/icon/print.png"> Print</a>
+                        <img src="../asset/icon/pencil10.png" class="zoom" style="cursor: pointer;" title="Change"> |
+                        <img src=" ../asset/icon/trash10.png" class="zoom" style="cursor: pointer;" title="Delete">
                     </td>
-                    <td class="fw-bold"><?= $row['NomorLot'] ?></td>
+                    <td><?= $row['NomorLot'] ?></td>
                     <td><?= $row['KodeSupplier'] ?></td>
                     <td><?= $row['NamaSupplier'] ?></td>
                     <td><?= $row['Keterangan'] ?></td>
                     <td><?= $row['Joins'] ?></td>
                     <td><?= $row['StatsX'] ?></td>
                     <td><?= $row['CreatedOn'] ?></td>
-                    <?php
-                    if ($_SESSION['personnelnumber'] == '90003560') { ?>
-                        <td>
-                            <a href="#" class="badge bg-danger text-decoration-none href_transform" onclick="deletedatanomorlot('<?= $row['NomorLot'] ?>')"><img src="../asset/img/delete.png"> Delete</a>
-                        </td>
-                    <?php } ?>
                 </tr>
             <?php
             }
@@ -106,9 +104,10 @@
         </tbody>
     </table>
 </div>
+</div>
 
 <!-- Modal Search Supplier-->
-<div class="modal fade" id="searchkodesuppliernomorlot" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+<!-- <div class="modal fade" id="searchkodesuppliernomorlot" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -143,4 +142,30 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
+
+<script>
+    document.getElementById("lampiran").addEventListener("change", function() {
+        let files = this.files;
+        let fileNames = [];
+        let fileList = document.getElementById("filelist");
+        fileList.innerHTML = ""; // reset list
+
+        for (let file of files) {
+            fileNames.push(file.name);
+
+            // buat <a> link preview
+            let li = document.createElement("li");
+            let a = document.createElement("a");
+            a.textContent = file.name;
+            a.href = URL.createObjectURL(file);
+            a.target = "_blank"; // biar buka di tab baru
+            li.appendChild(a);
+
+            fileList.appendChild(li);
+        }
+
+        // gabungkan semua nama file ke input text
+        document.getElementById("descimgdraftsp").value = fileNames.join(", ");
+    });
+</script>

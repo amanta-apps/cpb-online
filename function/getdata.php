@@ -13,6 +13,8 @@ $return = false;
 $msg = '';
 $time = 1500;
 $data = [];
+$createdon   = date("Y-m-d H:i:s");
+$createdby   = $_SESSION['userid'];
 if ($_SESSION['client'] == 'db_sisp_100') {
     $client = '100';
 }
@@ -10492,39 +10494,121 @@ if (isset($_POST['prosessimpancorrectiondata'])) {
 // Data Nomor Lot
 // ---------------------------------------------------------
 if (isset($_POST['prosessimpandatanomorlot'])) {
-    $result = false;
-    $nomorlot = $_POST['prosessimpandatanomorlot'][0];
-    $kodesupplier = $_POST['prosessimpandatanomorlot'][1];
-    $namasupplier = $_POST['prosessimpandatanomorlot'][2];
-    $keterangan = $_POST['prosessimpandatanomorlot'][3];
-    $join = $_POST['prosessimpandatanomorlot'][4];
-    $createdon = date("Y-m-d H:i:s");
-    $createdby = $_SESSION['userid'];
-    $changeon = date("Y-m-d H:i:s");
-    $changeby = $_SESSION['userid'];
-    $sql = mysqli_query($conn, "SELECT * FROM data_lot WHERE Plant='$plant' AND
-                                                            UnitCode='$unitcode' AND
-                                                            NomorLot = '$nomorlot'");
-    $q = mysqli_fetch_array($sql);
-    if (mysqli_num_rows($sql) == 0) {
-        $sql = mysqli_query($conn, "INSERT INTO data_lot (Plant,UnitCode,NomorLot,KodeSupplier,NamaSupplier,Keterangan,Joins,CreatedBy,CreatedOn) 
-                                    VALUES('$plant','$unitcode','$nomorlot','$kodesupplier','$namasupplier','$keterangan','$join','$createdby','$createdon')");
-    }
-    if ($sql === true) {
-        $result = true;
-    }
-    echo $result;
-}
-if (isset($_POST['prosesdeletedatanomorlot'])) {
-    $return = false;
-    $nomorlot = $_POST['prosesdeletedatanomorlot'];
-    $sql = mysqli_query($conn, "DELETE FROM data_lot WHERE Plant='$plant' AND 
-                                                                UnitCode='$unitcode' AND
-                                                                NomorLot='$nomorlot'");
-    if ($sql === true) {
+    try {
+        mysqli_begin_transaction($conn);
+        $return = false;
+        $nomorlot    = $_POST['prosessimpandatanomorlot'][0];
+        $kodesupplier = $_POST['prosessimpandatanomorlot'][1];
+        $namasupplier = $_POST['prosessimpandatanomorlot'][2];
+        $keterangan  = $_POST['prosessimpandatanomorlot'][3];
+        $join        = $_POST['prosessimpandatanomorlot'][4];
+
+        $cek = mysqli_query($conn, "SELECT NomorLot 
+                                FROM data_lot 
+                                WHERE Plant='$plant' 
+                                  AND UnitCode='$unitcode' 
+                                  AND NomorLot='$nomorlot'");
+        if (!$cek) {
+            throw new Exception("Query cek gagal: " . mysqli_error($conn));
+        }
+        if (mysqli_num_rows($cek) > 0) {
+            throw new Exception("NomorLot '$nomorlot' sudah ada di data_lot!");
+        }
+        if (!mysqli_query($conn, "INSERT INTO data_lot 
+                                                (Plant, 
+                                                UnitCode, 
+                                                NomorLot, 
+                                                KodeSupplier, 
+                                                NamaSupplier, 
+                                                Keterangan, 
+                                                Joins, 
+                                                CreatedBy, 
+                                                CreatedOn) 
+                                VALUES('$plant',
+                                '$unitcode',
+                                '$nomorlot',
+                                '$kodesupplier',
+                                '$namasupplier',
+                                '$keterangan',
+                                '$join',
+                                '$createdby',
+                                '$createdon')")) {
+            throw new Exception("Gagal insert data_lot: " . mysqli_error($conn));
+        }
+        mysqli_commit($conn);
+        $msg = "Data Tersimpan";
         $return = true;
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $msg = $e->getMessage();
+        errorlog($e->getMessage());
     }
-    echo $return;
+    $data = [
+        "icon_s" => 'success',
+        "icon_e" => 'warning',
+        "msg" => $msg,
+        "time" => $time,
+        "link" => null,
+        "id" => $nomorlot,
+        "return" => $return
+    ];
+    echo json_encode($data);
+}
+if (isset($_POST['prosesgetdatasupplier'])) {
+    $idpemasok = $_POST['prosesgetdatasupplier'] ?? '';
+    $query = mysqli_query($conn, "SELECT Descriptions FROM data_pemasok WHERE Plant='$plant'");
+    if (mysqli_num_rows($query) <> 0) {
+        $r = mysqli_fetch_array($query);
+        $return = true;
+        $msg = true;
+        $data = [
+            "icon_s" => 'success',
+            "icon_e" => 'warning',
+            "msg" => $msg,
+            "time" => $time,
+            "link" => null,
+            "id" => $r['$idpemasok'],
+            "desc" => $r['Descriptions'],
+            "return" => $return
+        ];
+    }
+    echo json_encode($data);
+}
+
+if (isset($_POST['prosesdeletedatanomorlot'])) {
+    try {
+        mysqli_begin_transaction($conn); // mulai transaksi
+        $return = false;
+        $nomorlot = $_POST['prosesdeletedatanomorlot'];
+
+        $sql = mysqli_query($conn, "DELETE FROM data_lot 
+                                        WHERE Plant='$plant' 
+                                        AND UnitCode='$unitcode' 
+                                        AND NomorLot='$nomorlot'");
+
+        if (!$sql) {
+            throw new Exception("Gagal hapus data_lot: " . mysqli_error($conn));
+        }
+
+        mysqli_commit($conn);
+        $msg = "Data Terhapus";
+        $return = true;
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $msg = $e->getMessage();
+        errorlog($e->getMessage());
+    }
+    $data = [
+        "icon_s" => 'success',
+        "icon_e" => 'warning',
+        "msg" => $msg,
+        "time" => $time,
+        "link" => null,
+        "id" => $nomorlot,
+        "return" => $return
+    ];
+
+    echo json_encode($data);
 }
 if (isset($_POST['prosesshowtableexecnomorlot'])) {
     $planningnumber = $_POST['prosesshowtableexecnomorlot'][0];
