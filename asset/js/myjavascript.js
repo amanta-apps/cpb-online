@@ -179,6 +179,7 @@ function msgs(iconmsgsukses='success',msgsukses='Tersimpan', time=3000) {
     showConfirmButton: false,
     focusConfirm: false,
     showCloseButton: false,
+    timer: time
   })
   return
 }
@@ -378,6 +379,85 @@ function kickuserlog(userid) {
 }
 function showversionaplikasi() {
   $('#versionaplikasi').modal('show')
+}
+function redirectlink(link,values,title,cc =  null) {
+  $.ajax({ 
+    url: "../function/getdata.php",
+    dataType: "JSON",
+    type: "POST",
+    cache: false,
+    data: {
+      "prosesredirectlink": [link,values,title,cc]
+    },
+    success: function (data) {
+      if (data.link != "") {
+        location.href = "mainpage?p="+data.link+"";
+      }
+    },
+  });
+}
+function downloadlink(jenisdocumen,addr,exec=1) {
+  $.ajax({ 
+    url: "../function/getdata.php",
+    dataType: "JSON",
+    type: "POST",
+    cache: false,
+    data: {
+      "prosesdownloadlink": [jenisdocumen,addr]
+    },
+    success: function (data) {
+      if (data.return == 1) {
+        if (exec == 1) {
+          download(data.link)
+        }else if (exec == 2) {
+          window.open(data.link, '_blank')
+        } 
+      }
+    },
+  });
+}
+function download(linked) {
+  var fileUrl = linked;
+  var link = document.createElement('a');
+  link.href = fileUrl;
+  link.download = link; 
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+function deleteimg(imgaddress,dir,table,keys) {
+  Swal.fire({
+  icon: "question",
+  text: "Hapus File tersebut",
+  showDenyButton: true,
+  showCancelButton: true,
+  confirmButtonText: "Ya",
+  denyButtonText: `Tidak`
+  }).then((result) => {
+    if (result.isConfirmed) {
+      $.ajax({ 
+        url: "../function/getdata.php",
+        dataType: "JSON",
+        type: "POST",
+        cache: false,
+        data: {
+          "prosesdeleteimg": [
+            imgaddress,
+            dir,
+            table,
+            keys
+          ]
+        },
+        success: function (data) {
+          if (data.return == 1) {
+            location.reload()
+          }else{
+            msgs(data.iconmsg,data.msg,data.time)
+          }
+        },
+      });
+    }
+  })
 }
 
 // ----------->> Dashboard
@@ -4186,9 +4266,9 @@ function prosesselectpersiapanhoper(planningnumber,years) {
       "prosesdisplaypersiapanhoper": [planningnumber,years]
     },
     success: function (data) {
-      if (data.status == 1) {
+      if (data.return == 1) {
         $('#planningnumberpersiapanhoper').val(data.planning)
-        $('#setplanningnumberpersiapanhoper').val(data.planning)
+        $('#yearspersiapanhoper').val(data.years)
         $('#productidpersiapanhoper').val(': ' +data.productid)
         $('#productdescriptionpersiapanhoper').val(': ' +data.productdecription)
         $('#shiftidpersiapanhoper').val(': ' +data.shiftid)   
@@ -4201,7 +4281,6 @@ function prosesselectpersiapanhoper(planningnumber,years) {
         $('#mixingpersiapanhoper').val(': ' +data.resourceidmix)
         $('#tglmixingpersiapanhoper').val(': ' +data.mixingdate)
         $('#qtypersiapanhoper').val(': ' +data.quantity+" "+data.unitofmeasures)
-        // $('#uompersiapanhoper').val(': ' +data.unitofmeasures)
         $('#prosesnumberpersiapanhoper').val(': ' +data.processnumber)      
         $('#createbydisplayplanning').val(': ' +data.createdby)
         $('#createonisplayplanning').val(': ' +data.createdon)
@@ -4209,12 +4288,10 @@ function prosesselectpersiapanhoper(planningnumber,years) {
         $('#changedbydisplayplanning').val(': ' +data.changedby)      
         $('#parameter2rhpersiapanhoper').val(data.rh)
         $('#parameter2suhupersiapanhoper').val(data.suhu)
-
         $('#parameter5_1persiapanhoper').val(data.standardroll)
         $('#parameter5_2persiapanhoper').val(data.batchnumber)
         $('#parameter5_3persiapanhoper').val(data.mixingdate)
         $('#parameter5_4persiapanhoper').val(data.expireddate)
-        $('#yearspersiapanhoper').val(data.years)
 
         $('#searchplanningnumberpersiapanhoper').modal('hide')
       }
@@ -4234,47 +4311,61 @@ function submitoperatorpersiapanhoper(operatornumber,nama) {
   }
 }
 function simpanpersiapanhopper() {
-  var planningnumber = $('#setplanningnumberpersiapanhoper').val()
-  var operator1 = $('#operator1persiapanhoper').val()
-  var operator2 = $('#operator2persiapanhoper').val()
-  var pengawas = $('#pengawasproduksipersiapanhoper').val()
-  var var1 = $('#parameter1persiapanhoper').val()
-  var var2 = $('#parameter2rhpersiapanhoper').val()
-  var var2_1 = $('#parameter2suhupersiapanhoper').val()
-  var var3 = $('#parameter3persiapanhoper').val()
-  var var4 = $('#parameter4persiapanhoper').val()
-  var var5 = $('#parameter5persiapanhoper').val()
-  // var var5_1 = $('#parameter5_1persiapanhoper').val()
-  var var5_2 = $('#parameter5_2persiapanhoper').val()
-  var var5_3 = $('#parameter5_3persiapanhoper').val()
-  var var5_4 = $('#parameter5_4persiapanhoper').val()
-  var var6 = $('#parameter6persiapanhoper').val()
-  var var7 = $('#parameter7persiapanhoper').val()
-  var var8 = $('#parameter8persiapanhoper').val()
-  var years = $('#yearspersiapanhoper').val()
-  if (planningnumber == '' || var2 =='' || var2_1 =='') {
-    missingparameter()
+  var planningnumber = $('#planningnumberpersiapanhoper').val();
+  var years = $('#yearspersiapanhoper').val();
+  var operator1 = $('#operator1persiapanhoper').val();
+  var operator2 = $('#operator2persiapanhoper').val();
+  var pengawas = $('#pengawasproduksipersiapanhoper').val();
+  var var1 = $('#parameter1persiapanhoper').val();
+  var var2 = $('#parameter2rhpersiapanhoper').val();
+  var var2_1 = $('#parameter2suhupersiapanhoper').val();
+  var var3 = $('#parameter3persiapanhoper').val();
+  var var4 = $('#parameter4persiapanhoper').val();
+  var var5 = $('#parameter5persiapanhoper').val();
+  var var5_2 = $('#parameter5_2persiapanhoper').val();
+  var var5_3 = $('#parameter5_3persiapanhoper').val();
+  var var5_4 = $('#parameter5_4persiapanhoper').val();
+  var var6 = $('#parameter6persiapanhoper').val();
+  var var7 = $('#parameter7persiapanhoper').val();
+  var var8 = $('#parameter8persiapanhoper').val();
+
+  if (!planningnumber || !var2 || !var2_1) {
+    missingparameter();
     return
   }
   $.ajax({
     url: "../function/getdata.php",
+    dataType: "JSON",
     type: "POST",
     cache: false,
     data: {
-      "prosessimpanpersiapanhoper": [planningnumber,operator1,operator2,
-      var1,var2,var2_1,var3,var4,var5,var5_2,var5_3,var5_4,var6,var7,var8,pengawas,years]
+      "prosessimpanpersiapanhoper": [
+        planningnumber,
+        operator1,
+        operator2,
+        var1,
+        var2,
+        var2_1,
+        var3,
+        var4,
+        var5,
+        var5_2,
+        var5_3,
+        var5_4,
+        var6,
+        var7,
+        var8,
+        pengawas,
+        years]
     },
     success: function (data) {
-      if (data == 1) {
-        Swal.fire({
-          text: "Persiapan proses hoper tersimpan",
-          icon: "success",
-          showConfirmButton: true,
-        }).then((result) => {
-          if (result.isConfirmed) {
+      if (data.return == 1) {
+          msgs()
+          setTimeout(() => {
             location.reload()
-          }
-        });
+          }, data.time);
+      }else{
+        msgs(data.iconmsg,data.msg,data.time)
       }
     }
   })
@@ -10397,11 +10488,9 @@ function submitstartlacakplanning() {
 function simpandatanomorlot() {
   let nomorlot     = $("#nomorlotuploadnomorlot").val();
   let kodesupplier = $("#kodesuppliernomorlot").val();
-  let namasupplier = $("#namasuppliernomorlot").val();
-  let keterangan   = $("#keterangannomorlot").val();
   let join         = $("#joinnomorlot").val();
 
-  if (!nomorlot || !kodesupplier || !namasupplier) {
+  if (!nomorlot || !kodesupplier) {
     missingparameter();
     return;
   }
@@ -10427,8 +10516,6 @@ function simpandatanomorlot() {
   }
   formData.append("nomorlot", nomorlot);
   formData.append("kodesupplier", kodesupplier);
-  formData.append("namasupplier", namasupplier);
-  formData.append("keterangan", keterangan);
   formData.append("join", join);
   formData.append("typess", "document_nomorlot");
   $.ajax({
@@ -10442,17 +10529,17 @@ function simpandatanomorlot() {
       if (data.return == 1) {
           msgs()
           setTimeout(() => {
-            location.reload()
+            redirectlink(data.link)
           }, data.time);
       }else{
-        msgs(data.iconmsgs,data.msgs,data.time)
+        msgs(data.iconmsgs,data.msg,data.time)
       }
     },
   });
 }
-function deletedatanomorlot(nomorlot) {
+function deletenomorlot(nomorlot) {
   Swal.fire({
-    text: "Delete Nomor Lot " + nomorlot,
+    text: "Delete Nomor Lot " + nomorlot ,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
@@ -10460,38 +10547,22 @@ function deletedatanomorlot(nomorlot) {
     confirmButtonText: 'Yes, delete it!'
   }).then((result) => {
     if (result.isConfirmed) {
-      document.getElementById('nomorlotuploadnomorlot').value=''
-      document.getElementById('kodesuppliernomorlot').value=''
-      document.getElementById('namasuppliernomorlot').value=''
-      document.getElementById('keterangannomorlot').value=''
-      document.getElementById('joinnomorlot').value=''
       $.ajax({
         url: "../function/getdata.php",
         dataType: "JSON",
         type: "POST",
         cache: false,
         data: {
-          "prosesdeletedatanomorlot": nomorlot
+          "prosesdeletenomorlot": nomorlot
         },
         success: function (data) {
           if (data.return == 1) {
-            Swal.fire({
-              text: data.msg,
-              icon: data.icon_s,
-              showConfirmButton: false,
-            })
-            setTimeout(function () {
-              location.reload();    
+            msgs()
+            setTimeout(() => {
+              location.reload()
             }, data.time);
-          } else {
-            Swal.fire({
-              text: data.msg,
-              icon: data.icon_e,
-              showConfirmButton: false,
-            })
-            setTimeout(function () {
-              location.reload();
-            }, data.time);
+          }else{
+            msgs(data.iconmsg,data.msg,data.time)
           }
         },
       });  
@@ -10525,25 +10596,6 @@ function selectsuppliernomorlot(kodesupplier,namasupplier,keterangan) {
   // document.getElementById('namasuppliernomorlot').setAttribute('readonly',true)
   // document.getElementById('keterangannomorlot').setAttribute('readonly',true)
   $('#searchkodesuppliernomorlot').modal('hide')
-}
-function getdatasupplier(kodesupplier) {
-  $('#kodesuppliernomorlot').val(null)
-  $('#namasuppliernomorlot').val(null)
-   $.ajax({
-    url: "../function/getdata.php",
-    dataType: "JSON",
-    type: "POST",
-    cache: false,
-    data: {
-      "prosesgetdatasupplier": kodesupplier
-    },
-    success: function (data) {
-      if (data.return == 1) {
-          $('#kodesuppliernomorlot').val(data.id)
-          $('#namasuppliernomorlot').val(data.desc)
-      }
-    },
-  });
 }
 function execnomorlot() {
   var planningnumber = $('#setplanningnumberprosestopack').val()

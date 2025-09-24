@@ -414,7 +414,6 @@ $uom = Getdata("UnitOfMeasures", "qc_characteristic", "KodeProses", "RK01");
                             <th style="width: 10%;">Kode</th>
                             <th style="width: 30%;">Nama</th>
                             <th>Join</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -427,8 +426,7 @@ $uom = Getdata("UnitOfMeasures", "qc_characteristic", "KodeProses", "RK01");
                                 </td>
                                 <td class="fw-bold"><?= $row['KodeSupplier'] ?></td>
                                 <td><?= $row['NamaSupplier'] ?></td>
-                                <td><?= $row['Join'] ?></td>
-                                <td><?= $row['Keterangan'] ?></td>
+                                <td><?= $row['Joins'] ?></td>
                             </tr>
                         <?php
                         }

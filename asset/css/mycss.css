@@ -505,3 +505,8 @@ table th {
     width: 100% !important;
     /* width: auto !important; */
 }
+
+fieldset,
+legend {
+    font-size: 9pt !important;
+}

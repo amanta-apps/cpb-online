@@ -4,10 +4,16 @@
     <div class="form-group row mb-0">
         <label for="personalnumberemployee" class="col-sm-2 col-form-label">Planning Number</label>
         <div class="col-sm-2">
-            <div class="input-group mb-4">
-                <input type="text" class="form-control" placeholder="Planning Number" aria-label="Recipient's username" aria-describedby="button-addon2" id="planningnumberpersiapanhoper">
+            <div class="input-group mb-1">
+                <input type="text" class="form-control" placeholder="Planning Number" aria-label="Recipient's username" aria-describedby="button-addon2" id="planningnumberpersiapanhoper" readonly>
                 <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon2" data-bs-toggle="modal" data-bs-target="#searchplanningnumberpersiapanhoper"><span><img src="../asset/icon/cari.png"></span></button>
             </div>
+        </div>
+    </div>
+    <div class="form-group row mb-4">
+        <label for="yearspersiapanhoper" class="col-sm-2 col-form-label">Years</label>
+        <div class="col-sm-1">
+            <input type="text" class="form-control form-control-sm" id="yearspersiapanhoper" readonly>
         </div>
     </div>
     <div class="accordion" id="accordionPanelsStayOpenExample">
@@ -20,9 +26,9 @@
             <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse" aria-labelledby="panelsStayOpen-headingOne">
                 <div class="accordion-body">
                     <div class="form-group row mb-0">
-                        <label for="setplanningnumberpersiapanhoper" class="col-sm-2 col-form-label">Planning Number</label>
+                        <label for="productidpersiapahoper" class="col-sm-2 col-form-label">Product ID</label>
                         <div class="col-sm-2">
-                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="setplanningnumberpersiapanhoper" readonly>
+                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="productidpersiapanhoper" readonly>
                         </div>
                         <label for="tanggalkemaspersiapanhoper" class="col-sm-2 offset-4 col-form-label">Tanggal Kemas</label>
                         <div class="col-sm-2">
@@ -30,9 +36,9 @@
                         </div>
                     </div>
                     <div class="form-group row mb-0">
-                        <label for="productidpersiapahoper" class="col-sm-2 col-form-label">Product ID</label>
+                        <label for="productidpersiapahoper" class="col-sm-2 col-form-label">Product Description</label>
                         <div class="col-sm-2">
-                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="productidpersiapanhoper" readonly>
+                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="productdescriptionpersiapanhoper" readonly>
                         </div>
                         <label for="shiftidpersiapanhoper" class="col-sm-2 offset-4 col-form-label">Shift ID</label>
                         <div class="col-sm-2">
@@ -40,9 +46,9 @@
                         </div>
                     </div>
                     <div class="form-group row mb-0">
-                        <label for="productidpersiapahoper" class="col-sm-2 col-form-label">Product Description</label>
+                        <label for="batchpersiapahoper" class="col-sm-2 col-form-label">Batch</label>
                         <div class="col-sm-2">
-                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="productdescriptionpersiapanhoper" readonly>
+                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="batchpersiapanhoper" readonly>
                         </div>
                         <label for="edpersiapanhoper" class="col-sm-2 offset-4 col-form-label">Expired Date</label>
                         <div class="col-sm-2">
@@ -50,25 +56,14 @@
                         </div>
                     </div>
                     <div class="form-group row mb-0">
-                        <label for="batchpersiapahoper" class="col-sm-2 col-form-label">Batch</label>
+                        <label for="nomesinpersipanhoper" class="col-sm-2 col-form-label">No Mesin</label>
                         <div class="col-sm-2">
-                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="batchpersiapanhoper" readonly>
+                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="nomesinpersipanhoper" readonly>
                         </div>
                         <label for="tglmixingpersiapahoper" class="col-sm-2 offset-4 col-form-label">Tanggal Mixing</label>
                         <div class="col-sm-2">
                             <input type="text" class="form-control form-control-sm bg-transparent border-0" id="tglmixingpersiapanhoper" readonly>
                         </div>
-                    </div>
-                    <div class="form-group row mb-0">
-                        <label for="nomesinpersipanhoper" class="col-sm-2 col-form-label">No Mesin</label>
-                        <div class="col-sm-2">
-                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="nomesinpersipanhoper" readonly>
-                        </div>
-                        <label for="yearspersiapanhoper" class="col-sm-2 offset-4 col-form-label">Years</label>
-                        <div class="col-sm-2">
-                            <input type="text" class="form-control form-control-sm bg-transparent border-0" id="yearspersiapanhoper" readonly>
-                        </div>
-
                     </div>
                     <div class="form-group row mb-0">
                         <label for="mixingpersiapahoper" class="col-sm-2 col-form-label">Mesin Mixing</label>
@@ -221,11 +216,11 @@
                                 </tr>
                                 <tr>
                                     <td>- <?= GetdataII('Descriptions', 'text_sys', 'JenisProses', 'preparehoper', 'Item', 53) ?></td>
-                                    <td><input type="date" class="form-control form-control-sm" id="parameter5_3persiapanhoper" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" id="parameter5_3persiapanhoper" readonly></td>
                                 </tr>
                                 <tr>
                                     <td>- <?= GetdataII('Descriptions', 'text_sys', 'JenisProses', 'preparehoper', 'Item', 54) ?></td>
-                                    <td><input type="date" class="form-control form-control-sm" id="parameter5_4persiapanhoper" readonly></td>
+                                    <td><input type="text" class="form-control form-control-sm" id="parameter5_4persiapanhoper" readonly></td>
                                 </tr>
                             </table>
                         </div>
@@ -295,7 +290,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <table id="mytables" class="table table-sm" style="width:100%;">
+                <table id="table_prepare_hopper" class="table table-sm" style="width:100%;">
                     <thead class="bg-dark text-white">
                         <tr>
                             <th>Planing Number</th>
@@ -313,35 +308,6 @@
                             <th>Process</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php
-                        $plant = $_SESSION['plant'];
-                        $unitcode = $_SESSION['unitcode'];
-                        $sql = mysqli_query($conn, "SELECT * FROM planning_prod_header WHERE Plant='$plant' AND 
-                                                                                            UnitCode='$unitcode' AND 
-                                                                                            PrepareHoper is null AND 
-                                                                                            Approval='X'");
-                        while ($row = mysqli_fetch_array($sql)) {
-                        ?>
-                            <tr>
-                                <td><a href="#" class="badge bg-success href_transform" onclick="prosesselectpersiapanhoper('<?= $row['PlanningNumber'] ?>','<?= $row['Years'] ?>')"><?= $row['PlanningNumber'] ?></a></td>
-                                <td><?= $row['Years'] ?></td>
-                                <td><?= $row['ProductID'] ?></td>
-                                <td><?= $row['BatchNumber'] ?></td>
-                                <td><?= $row['ShiftID'] ?></td>
-                                <td><?= $row['PackingDate'] ?></td>
-                                <td><?= $row['ResourceID'] ?></td>
-                                <td><?= $row['ExpiredDate'] ?></td>
-                                <td><?= $row['ResourceIDMix'] ?></td>
-                                <td><?= $row['MixingDate'] ?></td>
-                                <td><?= $row['Quantity'] ?></td>
-                                <td><?= $row['UnitOfMeasures'] ?></td>
-                                <td><?= $row['ProcessNumber'] ?></td>
-                            </tr>
-                        <?php
-                        }
-                        ?>
-                    </tbody>
                 </table>
             </div>
         </div>

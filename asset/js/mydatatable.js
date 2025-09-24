@@ -765,4 +765,44 @@ $(document).ready(function() {
         ],
         dom: 'Bfrtip',
   });
+  $("#table_prepare_hopper").DataTable({
+        processing: true,
+        serverSide: true,
+        language: {
+            processing: "⏳ Loading"
+        },
+        ajax: {
+            url: "../function/serverside.php",
+            type: "POST",
+            cache: false,
+            data: {
+                "prosessimpandataproject": ["planning_prod_header","prepare_hopper"]
+             },
+            //  success: function (data) {
+            //   alert(data)
+            //  }
+        },
+        columns: [
+            { data: null,
+              render: function(data, type, row) {
+                return `
+                    <a href="#" class="badge bg-success href_transform" onclick="prosesselectpersiapanhoper(${row.PlanningNumber},${row.Years})">${row.PlanningNumber}</a>
+                `;
+            }
+            },
+            { data: "Years"},
+            { data: "ProductID"},
+            { data: "BatchNumber"},
+            { data: "ShiftID"},
+            { data: "PackingDate"},
+            { data: "ResourceID"},
+            { data: "ExpiredDate"},
+            { data: "ResourceIDMix"},
+            { data: "MixingDate"},
+            { data: "Quantity"},
+            { data: "UnitOfMeasures"},
+            { data: "ProcessNumber"},
+        ],
+        dom: 'Bfrtip',
+  });
 })

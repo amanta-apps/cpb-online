@@ -405,12 +405,3 @@ function beautydate2($tanggal)
     }
     return $tgl;
 }
-function errorlog($errortext)
-{
-    include 'koneksi.php';
-    $createdon = date("Y-m-d H:i:s");
-    $createdby = $_SESSION['personnelnumber'];
-    $query = "INSERT INTO table_errorlog (errortext,createdon,createdby)
-                VALUES('$errortext','$createdon','$createdby')";
-    mysqli_query($conn, $query);
-}

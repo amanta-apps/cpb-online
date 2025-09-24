@@ -1,3 +1,15 @@
+<?php
+$kodesupplier = $namasupplier = $nomorlot = $joins = $readonly = null;
+if (isset($_GET['n'])) {
+    $readonly = 'readonly';
+    $nomorlot = base64_decode($_GET['n']);
+    $r = mysqli_fetch_array(mysqli_query($conn, "SELECT * FROM data_lot WHERE Plant='$plant' AND NomorLot='$nomorlot'"));
+    $kodesupplier = $r['KodeSupplier'];
+    $namasupplier = $r['NamaSupplier'];
+    $nomorlot  = $r['NomorLot'];
+    $joins = $r['Joins'];
+}
+?>
 <div class="container">
     <h6 class="fw-bold mt-3 text-start"><img src="../asset/icon/barcode.png"> Nomor Lot</h6>
     <hr class="w-50 mb-3">
@@ -7,7 +19,7 @@
                 <div class="form-group row mb-0">
                     <label for="nomorlotuploadnomorlot" class="col-sm-4 col-form-label">Nomor Lot</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" id="nomorlotuploadnomorlot">
+                        <input type="text" class="form-control form-control-sm" id="nomorlotuploadnomorlot" value="<?= $nomorlot ?>" <?= $readonly ?>>
                     </div>
                 </div>
                 <div class="form-group row mb-0">
@@ -15,20 +27,11 @@
                         <hr>
                     </div>
                 </div>
-                <!-- <div class="form-group row mb-0">
-                    <label for="kodesuppliernomorlot" class="col-sm-4 col-form-label">Kode Supplier</label>
-                    <div class="col-sm-4">
-                        <div class="input-group mb-1">
-                            <input type="text" class="form-control form-control-sm" placeholder="Supplier ID" aria-label="Recipient's username" aria-describedby="button-addon2" id="kodesuppliernomorlot">
-                            <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon2" data-bs-toggle="modal" data-bs-target="#searchkodesuppliernomorlot"><span><img src="../asset/icon/cari.png"></span></button>
-                        </div>
-                    </div>
-                </div> -->
                 <div class="form-group row mb-0">
-                    <label for="namasuppliernomorlot2" class="col-sm-4 col-form-label">Kode Supplier</label>
+                    <label for="namasuppliernomorlot2" class="col-sm-4 col-form-label">Supplier/Vendor</label>
                     <div class="col-sm-8">
-                        <select name="" id="" class="select2" onchange="getdatasupplier(this.value)">
-                            <option value=""></option>
+                        <select id="kodesuppliernomorlot" class="select2">
+                            <option value="<?= $kodesupplier ?>"><?= $namasupplier ?></option>
                             <?php
                             $query = mysqli_query($conn, "SELECT Idpemasok,Descriptions FROM data_pemasok");
                             while ($r = mysqli_fetch_array($query)) { ?>
@@ -39,29 +42,54 @@
                     </div>
                 </div>
                 <div class="form-group row mb-0">
-                    <label for="namasuppliernomorlot" class="col-sm-4 col-form-label">Nama Supplier</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" id="namasuppliernomorlot" readonly>
-                    </div>
-                </div>
-                <div class="form-group row mb-0">
                     <label for="joinnomorlot" class="col-sm-4 col-form-label">Join</label>
                     <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" id="joinnomorlot">
+                        <input type="text" class="form-control form-control-sm" id="joinnomorlot" value="<?= $joins ?>">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-8 offset-4 mt-2">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="simpandatanomorlot()"><img src="../asset/icon/save.png"> Simpan</button>
                     </div>
                 </div>
             </div>
             <div class="col-sm-6">
+                Upload Files
                 <div class="col-sm-12">
                     <input type="file" id="lampiran" name="lampiran[]" multiple class="form-control mb-2" accept="image/*">
                     <ol id="filelist" class="mt-2"></ol>
                     <input type="text" class="form-control form-control-sm" id="descimgdraftsp" readonly hidden>
                 </div>
-            </div>
-            <div class="form-group row">
-                <div class="col-sm-2 offset-2 mt-2">
-                    <button type="button" class="btn btn-outline-success btn-sm" onclick="simpandatanomorlot()"><img src="../asset/icon/save.png"> Simpan</button>
-                </div>
+                <?php
+                $query = mysqli_query($conn, "SELECT documenid,documenaddress,createdon,createdby FROM table_datadoclot WHERE nomorlot='$nomorlot'");
+                if (mysqli_num_rows($query)) { ?>
+                    <div class="form-group row mb-1">
+                        <fieldset class="border rounded p-2 mb-3">
+                            <legend class="float-none w-auto px-2">Files</legend>
+                            <table class="table table-borderless w-75">
+                                <tbody>
+                                    <?php
+                                    while ($r = mysqli_fetch_array($query)) { ?>
+                                        <tr>
+                                            <td>
+                                                <a href="#" onclick="downloadlink(2,'<?= $r['documenaddress'] ?>',2)"><?= $r['documenaddress'] ?></a>
+                                            </td>
+                                            <td class="text-end opacity-50 fs-7"><?= Getpernr($r['createdby']) . ' - ' . Getnamakaryawan($r['createdby']) . ', ' . beautydate2($r['createdon']) ?></td>
+                                            <td style="width: 10%;">
+                                                <img src="../asset/icon/trash10.png" class="zoom opacity-50" style="cursor: pointer;" title="delete" onclick="deleteimg('<?= $r['documenaddress'] ?>',2,'table_datadoclot','<?= $r['documenid'] ?>')">
+                                                <img src="../asset/icon/download15.png" class="zoom opacity-50" style="cursor: pointer;" title="download" onclick="downloadlink(16,'<?= $r['imgnotice'] ?>',1)">
+                                            </td>
+                                        </tr>
+                                    <?php
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </fieldset>
+                    </div>
+                <?php
+                }
+                ?>
             </div>
         </div>
     </div>
@@ -73,7 +101,6 @@
                 <th>Nomor Lot</th>
                 <th>Kode Supplier</th>
                 <th>Nama Supplier</th>
-                <th>Keterangan</th>
                 <th>Join</th>
                 <th>Status</th>
                 <th>Created On</th>
@@ -87,13 +114,12 @@
             ?>
                 <tr>
                     <td>
-                        <img src="../asset/icon/pencil10.png" class="zoom" style="cursor: pointer;" title="Change"> |
-                        <img src=" ../asset/icon/trash10.png" class="zoom" style="cursor: pointer;" title="Delete">
+                        <img src="../asset/icon/pencil10.png" class="zoom" style="cursor: pointer;" title="Change" onclick="redirectlink('nomorlot','<?= $row['NomorLot'] ?>')"> |
+                        <img src="../asset/icon/trash10.png" class="zoom" style="cursor: pointer;" title="Delete" onclick="deletenomorlot('<?= $row['NomorLot'] ?>')">
                     </td>
                     <td><?= $row['NomorLot'] ?></td>
                     <td><?= $row['KodeSupplier'] ?></td>
                     <td><?= $row['NamaSupplier'] ?></td>
-                    <td><?= $row['Keterangan'] ?></td>
                     <td><?= $row['Joins'] ?></td>
                     <td><?= $row['StatsX'] ?></td>
                     <td><?= $row['CreatedOn'] ?></td>

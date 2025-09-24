@@ -7,6 +7,8 @@ $plant = $_SESSION['plant'];
 $unitcode = $_SESSION['unitcode'];
 $createdon = date("Y-m-d H:i:s");
 $createdby = $_SESSION['userid'];
+$changedon = date("Y-m-d H:i:s");
+$changedby = $_SESSION['userid'];
 $type_of_transaksi = $_POST['typess'];
 $time = 1500;
 $NewImageName = null;
@@ -82,8 +84,8 @@ if ($type_of_transaksi == 'analisapengemasanprimer') {
 
         $nomorlot        = $_POST['nomorlot'] ?? '';
         $kodesupplier    = $_POST['kodesupplier'] ?? '';
-        $namasupplier    = $_POST['namasupplier'] ?? '';
-        $keterangan      = $_POST['keterangan'] ?? '';
+        include_once 'getvalue.php';
+        $namasupplier    = Getdata('Descriptions', 'data_pemasok', 'Idpemasok', $kodesupplier);
         $join            = $_POST['join'] ?? '';
 
         $return    = false;
@@ -114,15 +116,27 @@ if ($type_of_transaksi == 'analisapengemasanprimer') {
             }
         }
 
-        // =============== Insert header ===============
-        $insert = mysqli_query($conn, "INSERT INTO data_lot 
+        $query = mysqli_query($conn, "SELECT NomorLot FROM data_lot WHERE NomorLot='$nomorlot'");
+        if (mysqli_num_rows($query) <> 0) {
+            $update = mysqli_query($conn, "UPDATE data_lot SET KodeSupplier='$kodesupplier',
+                                                                NamaSupplier='$namasupplier',
+                                                                Joins='$join',
+                                                                changedon='$changedon',
+                                                                changedby='$changedby'
+                                                            WHERE Plant='$plant' AND
+                                                                UnitCode='$unitcode' AND
+                                                                 NomorLot='$nomorlot'");
+            if (!$update) {
+                throw new Exception("Gagal update header: " . mysqli_error($conn));
+            }
+        } else {
+            $insert = mysqli_query($conn, "INSERT INTO data_lot 
                                                 (Plant, 
                                                 UnitCode, 
                                                 NomorLot, 
                                                 KodeSupplier, 
                                                 NamaSupplier, 
-                                                Keterangan, 
-                                                Joins, 
+                                                Joins,
                                                 CreatedBy, 
                                                 CreatedOn) 
                                 VALUES('$plant',
@@ -130,31 +144,31 @@ if ($type_of_transaksi == 'analisapengemasanprimer') {
                                 '$nomorlot',
                                 '$kodesupplier',
                                 '$namasupplier',
-                                '$keterangan',
                                 '$join',
                                 '$createdby',
                                 '$createdon')");
-        if (!$insert) {
-            throw new Exception("Gagal insert header: " . mysqli_error($conn));
+            if (!$insert) {
+                throw new Exception("Gagal insert header: " . mysqli_error($conn));
+            }
         }
 
-        // Kalau sampai sini berarti semua berhasil
         mysqli_commit($conn);
         $msg     = "Data Tersimpan";
-        $iconmsgs = "success";
+        $iconmsg = "success";
         $return   = true;
     } catch (Exception $e) {
         mysqli_rollback($conn);
         $msg     = $e->getMessage();
-        $iconmsgs = "error";
+        $iconmsg = "error";
         $return   = false;
         errorlog($e->getMessage());
     }
 
     $data = [
-        "iconmsgs"  => $iconmsgs,
+        "iconmsg"  => $iconmsgs,
         "msg"      => $msg,
         "time"      => $time,
+        "link" => 'nomorlot',
         "return"    => $return
     ];
 

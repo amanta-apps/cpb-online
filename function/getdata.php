@@ -11,7 +11,7 @@ $client = '300';
 $status = false;
 $return = false;
 $msg = '';
-$time = 1500;
+$time = 3000;
 $data = [];
 $createdon   = date("Y-m-d H:i:s");
 $createdby   = $_SESSION['userid'];
@@ -164,7 +164,21 @@ function showdataIII($value, $table, $where, $valuewhere, $where2, $valuewhere2,
         return $q[$value];
     }
 }
+function errorlog($errortext)
+{
+    // include 'koneksi.php';
+    global $conn;
+    $values = mysqli_real_escape_string($conn, $errortext);
 
+    $createdon = date("Y-m-d H:i:s");
+    $createdby = $_SESSION['personnelnumber'] ?? 'System';;
+    mysqli_query($conn, "INSERT INTO table_datalog (errortext,
+                                                    createdon,
+                                                    createdby)
+                VALUES('$values',
+                        '$createdon',
+                        '$createdby')");
+}
 // ---------------------------------------------------------
 // Login & Logout
 // ---------------------------------------------------------
@@ -298,6 +312,78 @@ if (isset($_POST['cekotorisasi'])) {
         'roles' =>  $roles
     ];
     echo json_encode($dump);
+}
+if (isset($_POST['prosesredirectlink'])) {
+    $link = $_POST['prosesredirectlink'][0];
+    $values = base64_encode($_POST['prosesredirectlink'][1]);
+    $title = base64_encode($_POST['prosesredirectlink'][2]);
+    $cc = base64_encode($_POST['prosesredirectlink'][3]);
+
+    $linked = $link . '&n=' . $values . '&t=' . $title;
+    if ($title == '' & $values <> '') {
+        $linked = $link . '&n=' . $values;
+    } elseif ($title <> '' & $values == '') {
+        $linked = $link . '&t=' . $title;
+    } elseif ($title == '' & $values == '') {
+        $linked = $link;
+    }
+    if ($cc <> '') {
+        $linked = $linked . '&c=' . $cc;
+    }
+
+    $data = [
+        "link" => $linked,
+        "title" => $title
+    ];
+    echo json_encode($data);
+}
+if (isset($_POST['prosesdownloadlink'])) {
+    $jenis = $_POST['prosesdownloadlink'][0];
+    $addr = $_POST['prosesdownloadlink'][1];
+
+    $r = mysqli_fetch_array(mysqli_query($conn, "SELECT Directions FROM master_directions 
+                                    WHERE Items ='$jenis'"));
+    $return = true;
+    $linked = $r['Directions'] . $addr;
+
+    $data = [
+        "link" => $linked,
+        "return" => $return
+    ];
+    echo json_encode($data);
+}
+if (isset($_POST['prosesdeleteimg'])) {
+    $imgaddress = $_POST['prosesdeleteimg'][0];
+    $dir = $_POST['prosesdeleteimg'][1];
+    $table = $_POST['prosesdeleteimg'][2];
+    $keys = $_POST['prosesdeleteimg'][3];
+
+    $sql = mysqli_query($conn, "SELECT Directions FROM master_directions WHERE Items=$dir");
+    if (mysqli_num_rows($sql) <> 0) {
+        $r = mysqli_fetch_array($sql);
+        $dir = $r['Directions'];
+    }
+    $file = $dir . $imgaddress;
+    if (file_exists($file)) {
+        unlink($file);
+    }
+    $query = mysqli_query($conn, "DELETE FROM $table
+                                    WHERE documenid = '$keys'");
+
+    if ($query) {
+        $return = true;
+        $msgs = "Data Tersimpan";
+        $icon_msgs = "success";
+    }
+    $data = [
+        "time" => $time,
+        "msg" => $msgs,
+        "iconmsg" => $icon_msgs,
+        "link" => null,
+        "norevisi" => $id,
+        "return" => $return,
+    ];
+    echo json_encode($data);
 }
 
 // ---------------------------------------------------------
@@ -5260,61 +5346,50 @@ if (isset($_POST['prosesapprovalplanning'])) {
 if (isset($_POST['prosesdisplaypersiapanhoper'])) {
     $planningnumber = $_POST['prosesdisplaypersiapanhoper'][0];
     $years = $_POST['prosesdisplaypersiapanhoper'][1];
-    $plant = $_SESSION['plant'];
-    $unitcode = $_SESSION['unitcode'];
-    $dump[] = '';
+
     $qc = mysqli_query($conn, "SELECT Rh,Suhu FROM qc_result WHERE Plant='$plant' AND
                                                                 UnitCode='$unitcode' AND
                                                                  PlanningNumber='$planningnumber' AND 
                                                                  Years='$years' AND
                                                                  Types='Hoper'");
     $row = mysqli_fetch_array($qc);
-    $dump['rh'] = $row['Rh'];
-    $dump['suhu'] = $row['Suhu'];
-    // if ($row['Rh_1'] != 0) {
-    //     $dump['rh'] = $row['Rh'] . ' - ' . $row['Rh_1'];
-    // }
-    // if ($row['Suhu_1'] != 0) {
-    //     $dump['suhu'] = $row['Suhu'] . ' - ' . $row['Suhu_1'];
-    // }
+    $data['rh'] = $row['Rh'];
+    $data['suhu'] = $row['Suhu'];
     $sql = mysqli_query($conn, "SELECT * FROM planning_prod_header WHERE Plant='$plant' AND
                                                                         UnitCode='$unitcode' AND 
                                                                         PlanningNumber = '$planningnumber' AND 
                                                                         Years='$years'");
     $q = mysqli_fetch_array($sql);
     if (mysqli_num_rows($sql) > 0) {
-        $dump['status'] = true;
-        $dump['planning'] = $q['PlanningNumber'];
-        $dump['productid'] = $q['ProductID'];
+        $data['return'] = true;
+        $data['planning'] = $q['PlanningNumber'];
+        $data['productid'] = $q['ProductID'];
         $single = mysqli_query($conn, "SELECT ProductDescriptions, StandardRoll, StandardRollKonversi FROM mara_product WHERE ProductID='$q[ProductID]'");
         $row = mysqli_fetch_array($single);
-        $dump['productdecription'] = $row['ProductDescriptions'];
-        $dump['standardroll'] = $row['StandardRoll'];
-        // $dump['standardrollkonversi'] = $row['StandardRollKonversi'];
-        $dump['shiftid'] = $q['ShiftID'];
-        $dump['packingdate'] = $q['PackingDate'];
-        $dump['resourceid'] = $q['ResourceID'];
-        $dump['batchnumber'] = $q['BatchNumber'];
-        $dump['expireddate'] = $q['ExpiredDate'];
-        $dump['resourceidmix'] = $q['ResourceIDMix'];
-        $dump['mixingdate'] = $q['MixingDate'];
-        $dump['quantity'] = $q['Quantity'];
-        $dump['unitofmeasures'] = $q['UnitOfMeasures'];
-        $dump['processnumber'] = $q['ProcessNumber'];
-        $dump['createdby'] = $q['CreatedBy'];
-        $dump['createdon'] = $q['CreatedOn'];
-        $dump['changedby'] = $q['ChangedBy'];
-        $dump['changedon'] = $q['ChangedOn'];
-        $dump['stts'] = $q['Stts'];
-        $dump['years'] = $q['Years'];
+        $data['productdecription'] = $row['ProductDescriptions'];
+        $data['standardroll'] = $row['StandardRoll'];
+        // $data['standardrollkonversi'] = $row['StandardRollKonversi'];
+        $data['shiftid'] = $q['ShiftID'];
+        $data['packingdate'] = beautydate1($q['PackingDate']);
+        $data['resourceid'] = $q['ResourceID'];
+        $data['batchnumber'] = $q['BatchNumber'];
+        $data['expireddate'] = beautydate1($q['ExpiredDate']);
+        $data['resourceidmix'] = $q['ResourceIDMix'];
+        $data['mixingdate'] = beautydate1($q['MixingDate']);
+        $data['quantity'] = $q['Quantity'];
+        $data['unitofmeasures'] = $q['UnitOfMeasures'];
+        $data['processnumber'] = $q['ProcessNumber'];
+        $data['createdby'] = $q['CreatedBy'];
+        $data['createdon'] = beautydate2($q['CreatedOn']);
+        $data['changedby'] = $q['ChangedBy'];
+        $data['changedon'] = beautydate2($q['ChangedOn']);
+        $data['stts'] = $q['Stts'];
+        $data['years'] = $q['Years'];
     }
-    echo json_encode($dump);
+    echo json_encode($data);
 }
 if (isset($_POST['prosessimpanpersiapanhoper'])) {
-    $return = false;
     $types = 'Hoper';
-    $plant = $_SESSION['plant'];
-    $unitcode = $_SESSION['unitcode'];
     $planningnumber = $_POST['prosessimpanpersiapanhoper'][0];
     $operator1 = $_POST['prosessimpanpersiapanhoper'][1];
     $operator2 = $_POST['prosessimpanpersiapanhoper'][2];
@@ -5325,17 +5400,17 @@ if (isset($_POST['prosessimpanpersiapanhoper'])) {
     $var4 = $_POST['prosessimpanpersiapanhoper'][7];
     $var5 = $_POST['prosessimpanpersiapanhoper'][8];
     $var5_2 = $_POST['prosessimpanpersiapanhoper'][9];
-    $var5_3 = $_POST['prosessimpanpersiapanhoper'][10];
-    $var5_4 = $_POST['prosessimpanpersiapanhoper'][11];
+    $var5_3 = date("Y-m-d H:i:s", strtotime($_POST['prosessimpanpersiapanhoper'][10]));
+    $var5_4 = date("Y-m-d H:i:s", strtotime($_POST['prosessimpanpersiapanhoper'][11]));
     $var6 = $_POST['prosessimpanpersiapanhoper'][12];
     $var7 = $_POST['prosessimpanpersiapanhoper'][13];
     $var8 = $_POST['prosessimpanpersiapanhoper'][14];
     $pengawas = $_POST['prosessimpanpersiapanhoper'][15];
     $years = $_POST['prosessimpanpersiapanhoper'][16];
-    $createdon = date("Y-m-d H:i:s");
-    $createdby = $_SESSION['userid'];
-
-    $sql = mysqli_query($conn, "INSERT INTO proses_prepare (Plant,UnitCode,PlanningNumber,Years,Types,Operator1,Operator2,PengawasProduksi,
+    // mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+    try {
+        mysqli_begin_transaction($conn);
+        $sql = mysqli_query($conn, "INSERT INTO proses_prepare (Plant,UnitCode,PlanningNumber,Years,Types,Operator1,Operator2,PengawasProduksi,
                                                                 Parameter_1,
                                                                 Parameter_2,
                                                                 Parameter_2_1,
@@ -5352,14 +5427,34 @@ if (isset($_POST['prosessimpanpersiapanhoper'])) {
                                                                 ,'$var1','$var2','$var2_1','$var3','$var4','$var5'
                                                                 ,'$var5_2','$var5_3','$var5_4',
                                                                 '$var6','$var7','$var8','$createdby','$createdon')");
-    if ($sql === true) {
-        mysqli_query($conn, "UPDATE planning_prod_header SET PrepareHoper='X' WHERE Plant='$plant' AND
+        if (!$sql) {
+            throw new Exception("Gagal insert proses_prepare: " . mysqli_error($conn));
+        }
+        if (!mysqli_query($conn, "UPDATE planning_prod_header SET PrepareHoper='X' WHERE Plant='$plant' AND
                                                                                 UnitCode='$unitcode' AND
                                                                                  PlanningNumber='$planningnumber' AND
-                                                                                 Years='$years'");
+                                                                                 Years='$years'")) {
+            throw new Exception("Gagal update planning_prod_header: " . mysqli_error($conn));
+        }
         $return = true;
+        mysqli_commit($conn);
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $msg = $e->getMessage();
+        errorlog($e->getMessage());
+        $return = false;
     }
-    echo $return;
+    $data = [
+        "iconmsg" => 'warning',
+        "time" => $time,
+        "msg" => $msg,
+        "link" => null,
+        "id" => $planningnumber,
+        "return" => $return
+    ];
+
+    echo json_encode($data);
+    exit;
 }
 
 // ---------------------------------------------------------
@@ -10554,32 +10649,12 @@ if (isset($_POST['prosessimpandatanomorlot'])) {
     ];
     echo json_encode($data);
 }
-if (isset($_POST['prosesgetdatasupplier'])) {
-    $idpemasok = $_POST['prosesgetdatasupplier'] ?? '';
-    $query = mysqli_query($conn, "SELECT Descriptions FROM data_pemasok WHERE Plant='$plant'");
-    if (mysqli_num_rows($query) <> 0) {
-        $r = mysqli_fetch_array($query);
-        $return = true;
-        $msg = true;
-        $data = [
-            "icon_s" => 'success',
-            "icon_e" => 'warning',
-            "msg" => $msg,
-            "time" => $time,
-            "link" => null,
-            "id" => $r['$idpemasok'],
-            "desc" => $r['Descriptions'],
-            "return" => $return
-        ];
-    }
-    echo json_encode($data);
-}
 
-if (isset($_POST['prosesdeletedatanomorlot'])) {
+if (isset($_POST['prosesdeletenomorlot'])) {
     try {
-        mysqli_begin_transaction($conn); // mulai transaksi
+        mysqli_begin_transaction($conn);
         $return = false;
-        $nomorlot = $_POST['prosesdeletedatanomorlot'];
+        $nomorlot = $_POST['prosesdeletenomorlot'];
 
         $sql = mysqli_query($conn, "DELETE FROM data_lot 
                                         WHERE Plant='$plant' 
@@ -10588,6 +10663,25 @@ if (isset($_POST['prosesdeletedatanomorlot'])) {
 
         if (!$sql) {
             throw new Exception("Gagal hapus data_lot: " . mysqli_error($conn));
+        }
+        $sql = mysqli_query($conn, "SELECT Directions FROM master_directions WHERE Plant='$plant' AND UnitCode='$unitcode' AND Items=2");
+        if (mysqli_num_rows($sql) <> 0) {
+            $r   = mysqli_fetch_array($sql);
+            $dir = $r['Directions'];
+        } else {
+            throw new Exception("Mapping master_directions : " . mysqli_error($conn));
+        }
+        $query = mysqli_query($conn, "SELECT documenaddress FROM table_datadoclot WHERE NomorLot='$nomorlot'");
+        if (mysqli_num_rows($query) <> 0) {
+            while ($r = mysqli_fetch_array($query)) {
+                $file = $dir . $r['documenaddress'];
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            }
+            mysqli_query($conn, "DELETE FROM table_datadoclot WHERE NomorLot='$nomorlot'");
+        } else {
+            throw new Exception("Documen Address Kosong : " . mysqli_error($conn));
         }
 
         mysqli_commit($conn);
@@ -10599,8 +10693,7 @@ if (isset($_POST['prosesdeletedatanomorlot'])) {
         errorlog($e->getMessage());
     }
     $data = [
-        "icon_s" => 'success',
-        "icon_e" => 'warning',
+        "iconmsg" => 'warning',
         "msg" => $msg,
         "time" => $time,
         "link" => null,
