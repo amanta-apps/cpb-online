@@ -2,10 +2,10 @@
     <h6 class="fw-bold mt-3 text-start"><img src="../asset/icon/supplier.png"> DAFTAR SUPPLIER</h6>
     <hr class="w-50 mb-3">
     <div class="card shadow-lg border-0 mb-1" id="cardcolor">
-        <div class="form-group row mb-0">
-            <label for="kodesupplierdatasupplier" class="col-sm-2 col-form-label">Kode Supplier</label>
+        <div class="form-group row mb-0" hidden>
+            <label for="kodesupplierdatasupplier" class="col-sm-2 col-form-label">Kode Pemasok</label>
             <div class="col-sm-2">
-                <input type="text" class="form-control form-control-sm text-uppercase" id="kodesupplierdatasupplier" value="<?= Getkode('KodeSupplier', 'data_supplier') ?>" readonly>
+                <input type="text" class="form-control form-control-sm text-uppercase" id="kodesupplierdatasupplier" value="<?= Getkode('Idpemasok', 'data_pemasok') ?>" readonly>
             </div>
         </div>
         <div class="form-group row mb-0">
@@ -32,16 +32,14 @@
         <thead class="bg-dark text-white">
             <tr>
                 <th style="width: 5%;"></th>
-                <th>Kode Supplier</th>
-                <th>Nama Supplier</th>
-                <th>Keterangan</th>
-                <th>Created On</th>
+                <th>Nama Pemasok</th>
+                <th style="width: 5%;">Created On</th>
             </tr>
         </thead>
         <tbody>
             <?php
             $i = 1;
-            $sql = mysqli_query($conn, "SELECT * FROM data_supplier WHERE Plant='$plant' AND UnitCode='$unitcode'");
+            $sql = mysqli_query($conn, "SELECT * FROM data_pemasok WHERE Plant='$plant'");
             while ($row = mysqli_fetch_array($sql)) {
             ?>
                 <tr>
@@ -49,10 +47,8 @@
                         <a href="#" class="badge bg-warning text-decoration-none href_transform" onclick="changedatasupplier('<?= $row['KodeSupplier'] ?>')">Change</a>
                         <a href="#" class="badge bg-danger text-decoration-none href_transform" onclick="deletedatasupplier('<?= $row['KodeSupplier'] ?>')">Delete</a>
                     </td>
-                    <td><?= $row['KodeSupplier'] ?></td>
-                    <td><?= $row['NamaSupplier'] ?></td>
-                    <td><?= $row['Keterangan'] ?></td>
-                    <td><?= $row['CreatedOn'] ?></td>
+                    <td><?= $row['Descriptions'] ?></td>
+                    <td><?= beautydate2($row['CreatedOn']) ?></td>
                 </tr>
             <?php
             }

@@ -203,7 +203,7 @@ if ($_GET['end'] == '') {
             } elseif ($r['FormReviewer'] == 'approval_proses' && $r['StatsX'] == 'X') {
                 if (mysqli_num_rows($mr) != 0) { ?>
                     <section class="border-dashboard">
-                        <h6 class="mb-3">List of Requests <b>Persetujuan All Proses</b></h6>
+                        <h6 class="mb-3">List of Requests <b>Kepala Unit</b></h6>
                         <nav>
                             <div class="nav nav-tabs" id="nav-tab" role="tablist">
                                 <button class="nav-link active" id="nav-allprosespengemasanlanningmenunggu-tab" data-bs-toggle="tab" data-bs-target="#nav-allprosespengemasanlanningmenunggu" type="button" role="tab" aria-controls="nav-allprosespengemasanlanningmenunggu" aria-selected="false">Antrian</button>
@@ -211,24 +211,10 @@ if ($_GET['end'] == '') {
                         </nav>
                         <div class="tab-content mt-3" id="nav-tabContent">
                             <div class="tab-pane fade show active" id="nav-allprosespengemasanlanningmenunggu" role="tabpanel" aria-labelledby="nav-allprosespengemasanlanningmenunggu-tab">
-                                <section id="parameter3" class="mb-3">
-                                    <div class="form-group row mb-0">
-                                        <label for="batchstartdisplayplanningpengolahan" class="col-sm-2 col-form-label">Periode</label>
-                                        <div class="col-sm-2">
-                                            <input type="date" class="form-control form-control-sm" id="tglfromallproses" value="<?= $tgl_start ?>">
-                                        </div>
-                                        <div class="col-sm-2">
-                                            <input type="date" class="form-control form-control-sm" id="tglendallproses" value="<?= $tgl_end ?>">
-                                        </div>
-                                        <div class="col-sm-2">
-                                            <button type="button" class="btn btn-secondary btn-sm zoom" onclick="submitdisplayapprovalallproses()"><img src="../asset/icon/search.png"> Cari</button>
-                                        </div>
-                                    </div>
-                                </section>
                                 <table id="mytable_dashboard3" class="table table-sm" style="width:100%;">
                                     <thead class="fw-normal bg-dark text-white">
                                         <tr>
-                                            <th><input type="checkbox" onchange="checkAll_allproses(this.checked)"></th>
+                                            <!-- <th><input type="checkbox" onchange="checkAll_allproses(this.checked)"></th> -->
                                             <th style="width: 10%;">Planning Number</th>
                                             <th style="width: 5%;">Planning Years</th>
                                             <th>Product ID</th>
@@ -238,38 +224,8 @@ if ($_GET['end'] == '') {
                                             <th>#</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <?php
-                                        $i = 1;
-                                        $sql = mysqli_query($conn, "SELECT * FROM planning_prod_header WHERE Plant='$plant' AND 
-                                                                            UnitCode='$unitcode' AND 
-                                                                            (ReviewMG ='' or ReviewMG is null) AND
-                                                                            (ReviewQA ='' or ReviewQA is null) AND
-                                                                            RekonPillow='X' AND
-                                                                            CreatedOn >='$tgl_start' AND CreatedOn <= '$tgl_end' 
-                                                                            ORDER BY CreatedOn ASC");
-                                        while ($row = mysqli_fetch_array($sql)) {
-                                            $pernr3 = Getdata('PersonnelNumber', 'usr02', 'UserID', $row['CreatedBy']);
-                                        ?>
-                                            <tr>
-                                                <td><input type="checkbox" name="selectallproses[]" id="selectallproses" value="<?= $row['PlanningNumber'] . '/' . $row['Years'] ?>"></td>
-                                                <td class="text-dark"><button class="btn-sm badge bg-warning text-dark zoom" onclick="showdetailallproses('<?= $row['PlanningNumber'] ?>','<?= $row['Years'] ?>')">#<?= $row['PlanningNumber'] ?></button></a></td>
-                                                <td class="text-dark"><?= $row['Years'] ?></td>
-                                                <td><?= $row['ProductID'] ?></td>
-                                                <td><?= $row['BatchNumber'] ?></td>
-                                                <td><?= $pernr3 . ' - ' . Getdata('EmployeeName', 'pa001', 'PersonnelNumber', $pernr3) ?></td>
-                                                <td><?= date('d/m/Y H:i:s', strtotime($row['CreatedOn'])) ?></td>
-                                                <td><a href="#" class="badge bg-success zoom text-decoration-none text-white" onclick="saveapprovalproses('<?= $row['PlanningNumber'] ?>','<?= $row['Years'] ?>')"><img src="../asset/icon/accept2.png"> Setuju</a>
-                                                    <a href="#" class="badge bg-danger zoom text-decoration-none text-white" onclick="message(1)"><img src="../asset/icon/no_accept.png"> Tolak</a>
-                                                </td>
-                                            </tr>
-                                        <?php
-                                            $i = $i + 1;
-                                        }
-                                        ?>
-                                    </tbody>
                                 </table>
-                                <div class="form-group row mb-0" id="buttonsetujuisemua">
+                                <div class="form-group row mb-0" id="buttonsetujuisemua" hidden>
                                     <div class="col-sm-2">
                                         <button type="button" class="btn btn-success btn-sm zoom" onclick="saveallapprovalproses()"><img src="../asset/icon/accept2.png"> Setuju Semua</button>
                                     </div>

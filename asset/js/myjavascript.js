@@ -461,7 +461,6 @@ function deleteimg(imgaddress,dir,table,keys) {
 }
 
 // ----------->> Dashboard
-
 function submitdisplayapprovalallproses() {
   var tglstart = $('#tglfromallproses').val()
   var tglend = $('#tglendallproses').val()
@@ -659,29 +658,72 @@ function saveapprovalproses(planningnumber,years) {
   Swal.fire({
     text: "Approved Planning "+planningnumber+ " ?",
     icon: 'question',
+    input: "text",
+    inputAttributes: {
+      autocapitalize: "off"
+    },
+    inputPlaceholder: 'Tulis catatan di sini...',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
     cancelButtonColor: '#d33',
-    confirmButtonText: 'Ya!'
+    confirmButtonText: 'Ya!',
   }).then((result) => {
     if (result.isConfirmed) {
+      let catatan = result.value || ''; 
       $.ajax({
         url: "../function/getdata.php",
+        dataType: "JSON",
         type: "POST",
         cache: false,
         data: {
-          "prosessaveapprovalproses": [planningnumber,years]
+          "prosessaveapprovalproses": [planningnumber,years,catatan]
         },
         success: function (data) {
-          if (data != '') {
-            Swal.fire({
-              text: "Planning "+planningnumber+ " Approved",
-              icon: "success",
-              showConfirmButton: false,
-            })
-            setTimeout(function () {
-              location.reload()  
-            }, 1500);
+          if (data.return == 1) {
+              msgs()
+              setTimeout(() => {
+                location.reload()
+              }, data.time);
+          }else{
+            msgs(data.iconmsg,data.msg,data.time)
+          }
+        },
+      });
+    }
+  })
+}
+function tolakapprovalproses(planningnumber,years) {
+  Swal.fire({
+    text: "Tolak Planning "+planningnumber+ " ?",
+    icon: 'question',
+    input: "text",
+    inputAttributes: {
+      autocapitalize: "off"
+    },
+    inputPlaceholder: 'Tulis catatan di sini...',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Ya!',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      let catatan = result.value || ''; 
+      $.ajax({
+        url: "../function/getdata.php",
+        dataType: "JSON",
+        type: "POST",
+        cache: false,
+        data: {
+          "prosestolakapprovalproses": [planningnumber,years,catatan]
+        },
+        success: function (data) {
+          if (data.return == 1) {
+              msgs()
+              setTimeout(() => {
+                location.reload()
+              }, data.time);
+          }else{
+            msgs(data.iconmsg,data.msg,data.time)
           }
         },
       });

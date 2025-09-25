@@ -104,9 +104,70 @@ $(document).ready( function () {
       $("#mytable_dashboard3").DataTable({
         dom: 'frtip',
         language: {
-        search: "🔍Search" // kosongkan label
-        }
+        search: "🔍Search"
+        },
+
+        processing: true,
+        serverSide: true,
+        language: {
+            processing: "⏳ Loading"
+        },
+        ajax: {
+            url: "../function/serverside.php",
+            type: "POST",
+            cache: false,
+            data: {
+                "prosessimpandataproject": ["planning_prod_header","approval_kaunit"]
+             },
+        },
+        columns: [
+            { data: null,
+              render: function(data, type, row) {
+                return `
+                    <button class="btn-sm badge bg-warning text-dark zoom" onclick="showdetailallproses(${row.PlanningNumber},${row.Years})">#${row.PlanningNumber}</button>
+                `;
+            }
+            },
+            { data: "Years"},
+            { data: "ProductID"},
+            { data: "BatchNumber"},
+            {
+              data: null,
+              render: function (data, type, row) {
+                // Pastikan kalau salah satu null, tetap aman
+                const name = row.EmployeeName || "";
+                const createdFor = row.CreatedFor || "";
+                return `${name} -  ${createdFor}`.trim();
+              }
+            },
+            { 
+              data: "CreatedOn",
+              render: function(data, type, row) {
+                  if (!data) return "";
+                  let d = new Date(data);
+
+                  let day    = ("0" + d.getDate()).slice(-2);
+                  let month  = ("0" + (d.getMonth() + 1)).slice(-2);
+                  let year   = d.getFullYear();
+                  let hours  = ("0" + d.getHours()).slice(-2);
+                  let minute = ("0" + d.getMinutes()).slice(-2);
+                  let second = ("0" + d.getSeconds()).slice(-2);
+
+                  return `${day}.${month}.${year} ${hours}:${minute}:${second}`;
+              }
+            },
+            { data: null,
+              render: function(data, type, row) {
+                return `
+                    <a href="#" class="badge bg-success zoom text-decoration-none text-white" onclick="saveapprovalproses(${row.PlanningNumber},${row.Years})"><img src="../asset/icon/accept2.png"> Setuju</a>
+                    <a href="#" class="badge bg-danger zoom text-decoration-none text-white" onclick="tolakapprovalproses(${row.PlanningNumber},${row.Years})"><img src="../asset/icon/no_accept.png"> Tolak</a>
+                `;
+            }
+            },
+        ],
+        dom: 'Bfrtip',
       });
+
       $("#mytable_dashboard4").DataTable({
         dom: 'frtip',
         language: {
@@ -805,4 +866,69 @@ $(document).ready(function() {
         ],
         dom: 'Bfrtip',
   });
+
+  $("#table_manajemenstok").DataTable({
+        processing: true,
+        serverSide: true,
+        language: {
+            processing: "⏳ Loading"
+        },
+        ajax: {
+            url: "../function/serverside.php",
+            type: "POST",
+            cache: false,
+            data: {
+                "prosessimpandataproject": ["tbl_movingstock","manajemen_stok"]
+             },
+        },
+        columns: [
+            { data: "ProductID"},
+            { data: "ProductDescriptions"},
+            { data: "BatchNumber"},
+            { data: "NoPallet"},
+            { data: "NoProses"},
+            { data: "Quantity"},
+        ],
+        dom: 'Bfrtip',
+        footerCallback: function () {
+          let api = this.api();
+          let total = api.column(5, { page: 'current' }).data().reduce((a, b) => +a + +b, 0);
+          $(api.column(5).footer()).html(total.toLocaleString()+' Kg');
+        }
+  });
+
+  $("#table_manajemenstok2").DataTable({
+        processing: true,
+        serverSide: true,
+        language: {
+            processing: "⏳ Loading"
+        },
+        ajax: {
+            url: "../function/serverside.php",
+            type: "POST",
+            cache: false,
+            data: {
+                "prosessimpandataproject": ["tbl_stockhouse","stock_house"]
+             },
+        },
+        columns: [
+            { data: "UnitType"},
+            { data: "ProductID"},
+            { data: "ProductDescriptions"},
+            { data: "BatchNumber"},
+            { data: "Quantity"},
+        ],
+        dom: 'Bfrtip',
+        // footerCallback: function (row, data, start, end, display) {
+        //   let api = this.api();
+        //   let totalAll = api.ajax.json().totalQuantity || 0;
+        //   $(api.column(4).footer()).html(`${totalAll.toLocaleString()}`);
+        // }
+        footerCallback: function () {
+          let api = this.api();
+          let total = api.column(4, { page: 'current' }).data().reduce((a, b) => +a + +b, 0);
+          $(api.column(4).footer()).html(total.toLocaleString()+' Kg');
+        }
+  });
 })
+

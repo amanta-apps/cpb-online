@@ -3,11 +3,11 @@ header('Content-Type: application/json');
 // error_reporting(E_ALL);
 // ini_set('display_errors', 1);
 session_start();
-$plant = $_SESSION['plant'];
-$unitcode = $_SESSION['unitcode'];
+$plant = $_SESSION['plant'] ?? 'Uknown';
+$unitcode = $_SESSION['unitcode'] ?? 'Unknown';
 include_once 'koneksi.php';
+// global $conn;
 // include_once 'getvalue.php';
-
 $where = "";
 $data = [];
 $draw   = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
@@ -121,6 +121,76 @@ if ($proses == "reportpengemasan") {
     while ($row = $result->fetch_assoc()) {
         $data[] = $row;
     }
+} elseif ($proses == "manajemen_stok") {
+    $totalQuery = $conn->query("SELECT COUNT(*) as T FROM $table");
+    $totalData  = $totalQuery->fetch_assoc()['T'];
+
+    if (!empty($searchValue)) {
+        $searchValue = $conn->real_escape_string($searchValue);
+        $where = "AND (A.BatchNumber LIKE '%$searchValue%' OR A.PlanningNumber LIKE '%$searchValue%')";
+    }
+    $filterQuery = $conn->query("SELECT COUNT(*) AS F FROM $table WHERE Plant='$plant' AND 
+                                        UnitCode='$unitcode'");
+    $totalFiltered = $filterQuery->fetch_assoc()['F'];
+
+    $totalQuantity = 0;
+    $result = $conn->query("SELECT A.*,B.ProductDescriptions FROM $table A LEFT JOIN mara_product B ON A.ProductID = B.ProductID WHERE A.Plant='$plant' AND 
+                                        A.UnitCode='$unitcode' $where LIMIT $start, $length");
+    while ($row = $result->fetch_assoc()) {
+        $totalQuantity += $row['Quantity'];
+        $data[] = $row;
+    }
+} elseif ($proses == "stock_house") {
+    $totalQuery = $conn->query("SELECT COUNT(*) as T FROM $table");
+    $totalData  = $totalQuery->fetch_assoc()['T'];
+
+    if (!empty($searchValue)) {
+        $searchValue = $conn->real_escape_string($searchValue);
+        $where = "AND (A.BatchNumber LIKE '%$searchValue%' OR A.UnitType LIKE '%$searchValue%')";
+    }
+    $filterQuery = $conn->query("SELECT COUNT(*) AS F FROM $table WHERE Plant='$plant' AND 
+                                        UnitCode='$unitcode'");
+    $totalFiltered = $filterQuery->fetch_assoc()['F'];
+
+    $totalQuantity = 0;
+    $result = $conn->query("SELECT A.*,B.ProductDescriptions FROM $table A LEFT JOIN mara_product B ON A.ProductID = B.ProductID WHERE A.Plant='$plant' AND 
+                                        A.UnitCode='$unitcode' $where LIMIT $start, $length");
+    while ($row = $result->fetch_assoc()) {
+        $totalQuantity += $row['Quantity'];
+        $data[] = $row;
+    }
+} elseif ($proses == "approval_kaunit") {
+    $totalQuery = $conn->query("SELECT COUNT(*) as T FROM $table WHERE Plant='$plant' AND 
+                                                                            UnitCode='$unitcode' AND 
+                                                                            (ReviewMG ='' OR ReviewMG is null) AND
+                                                                            RekonPillow='X' AND SttsX='REL'");
+    $totalData  = $totalQuery->fetch_assoc()['T'];
+
+    if (!empty($searchValue)) {
+        $searchValue = $conn->real_escape_string($searchValue);
+        $where = "AND (A.PlanningNumber LIKE '%$searchValue%' OR A.BatchNumber LIKE '%$searchValue%' OR A.ProductID LIKE '%$searchValue%')";
+    }
+    $filterQuery = $conn->query("SELECT COUNT(*) AS F FROM $table WHERE Plant='$plant' AND 
+                                                                            UnitCode='$unitcode' AND 
+                                                                            (ReviewMG ='' OR ReviewMG is null) AND
+                                                                            RekonPillow='X' AND SttsX='REL'
+                                                                            ORDER BY CreatedOn ASC");
+    $totalFiltered = $filterQuery->fetch_assoc()['F'];
+
+    $result = $conn->query("SELECT A.PlanningNumber,
+                                    A.Years,
+                                    A.ProductID,
+                                    A.BatchNumber,
+                                    A.CreatedFor,
+                                    A.CreatedOn,
+                                    B.EmployeeName FROM $table A LEFT JOIN pa001 B ON A.CreatedFor = B.PersonnelNumber WHERE A.Plant='$plant' AND 
+                                                                            A.UnitCode='$unitcode' AND 
+                                                                            (A.ReviewMG ='' OR A.ReviewMG is null) AND
+                                                                            A.RekonPillow='X' AND A.SttsX='REL'
+                                                                            $where  ORDER BY A.CreatedOn DESC LIMIT $start, $length");
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
 }
 echo json_encode([
     "draw" => $draw,
@@ -128,4 +198,5 @@ echo json_encode([
     "recordsFiltered" => $totalFiltered,
     "data" => $data,
 ]);
+
 exit;

@@ -236,9 +236,11 @@ if ($_SESSION['client'] == 'db_sisp_100') {
     <script src="../asset/datatable/jquery-3.5.1.js"></script>
     <!-- End Data Table -->
     <!-- My Data Table -->
-    <script src="../asset/js/mydatatable.js"></script>
+
     <script src="../asset/datatable/jquery.dataTables.min.js"></script>
     <script src="../asset/datatable/dataTables.bootstrap5.min.js"></script>
+    <script src="../asset/js/mydatatable.js"></script>
+    <!-- <script src="../asset/js/myjavascript.js"></script> -->
     <!-- End Data Table -->
 
     <!-- Sweet Alert -->

@@ -36,11 +36,8 @@ function Getkode($value, $table)
         $urutan++;
         $code = Getdata('UserIDCode', 'general_setting_web', 'UnitCode', 'S001');
         $return = $code . sprintf("%03s", $urutan);
-    } elseif ($value == 'KodeSupplier') {
-        $urutan = (int) substr($result, 4, 6);
-        $urutan++;
-        $code = Getdata('KodeSupplier', 'general_setting_web', 'UnitCode', 'S001');
-        $return = $code . sprintf("%04s", $urutan);
+    } elseif ($value == 'Idpemasok') {
+        $return = $result + 1;
     }
     return $return;
 }

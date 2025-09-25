@@ -15,6 +15,8 @@ $time = 3000;
 $data = [];
 $createdon   = date("Y-m-d H:i:s");
 $createdby   = $_SESSION['userid'];
+$changedon = date("Y-m-d H:i:s");
+$changedby = $_SESSION['userid'];
 if ($_SESSION['client'] == 'db_sisp_100') {
     $client = '100';
 }
@@ -284,6 +286,10 @@ if (isset($_POST['proseslogout'])) {
     ];
     echo $return;
 }
+
+// ---------------------------------------------------------
+// Other
+// ---------------------------------------------------------
 if (isset($_POST['cekotorisasi'])) {
     $roles = array();
     $userid = $_POST['cekotorisasi'];
@@ -384,6 +390,25 @@ if (isset($_POST['prosesdeleteimg'])) {
         "return" => $return,
     ];
     echo json_encode($data);
+}
+if (isset($_POST['prosesceksession'])) {
+    $return = false;
+    $sql = mysqli_query($conn, "SELECT * FROM user_log WHERE UserID='$_SESSION[userid]'");
+    $r = mysqli_fetch_array($sql);
+    if (mysqli_num_rows($sql) == 0) {
+        session_destroy();
+        $return = true;
+    } else {
+        $time = strtotime($r['LastAct']);
+        $time_now = strtotime(date('Y-m-d H:i:s'));
+        $diff = $time_now - $time;
+        $jam = floor($diff / (60 * 60));
+        if ($jam > 0) {
+            session_destroy();
+            $return = true;
+        }
+    }
+    echo $return;
 }
 
 // ---------------------------------------------------------
@@ -768,30 +793,32 @@ if (isset($_POST['prosessaveallapprovalproses'])) {
     echo $return;
 }
 if (isset($_POST['prosessaveapprovalproses'])) {
-    $planningnumber = $_POST['prosessaveapprovalproses'][0];
-    $years = $_POST['prosessaveapprovalproses'][1];
-    $return = false;
+    $planningnumber = $_POST['prosessaveapprovalproses'][0] ?? '';
+    $years = $_POST['prosessaveapprovalproses'][1] ?? '';
+    $catatan = $_POST['prosessaveapprovalproses'][2] ?? '';
 
-    $createdon = date("Y-m-d H:i:s");
-    $createdby = $_SESSION['userid'];
-    $changedon = date("Y-m-d H:i:s");
-    $changedby = $_SESSION['userid'];
-
-    $sql = mysqli_query($conn, "SELECT * FROM planning_prod_header WHERE Plant='$plant' AND 
+    try {
+        mysqli_begin_transaction($conn);
+        $sql = mysqli_query($conn, "SELECT PlanningNumber FROM planning_prod_header WHERE Plant='$plant' AND 
                                                                             UnitCode='$unitcode' AND 
                                                                             PlanningNumber='$planningnumber' AND
                                                                             Years='$years' AND
                                                                             ReviewMG is null");
-    if (mysqli_num_rows($sql) != 0) {
-        mysqli_query($conn, "UPDATE planning_prod_header SET ReviewMG='X' WHERE Plant='$plant' AND 
-                                                                            UnitCode='$unitcode' AND 
-                                                                            PlanningNumber='$planningnumber' AND
-                                                                            Years='$years'");
-        $query = mysqli_query($conn, "INSERT INTO proses_review_mg(Plant,
+        if (mysqli_num_rows($sql) != 0) {
+            $query = mysqli_query($conn, "UPDATE planning_prod_header SET ReviewMG='X'
+                                            WHERE Plant='$plant' AND 
+                                                UnitCode='$unitcode' AND 
+                                                PlanningNumber='$planningnumber' AND
+                                                Years='$years'");
+            if (!$query) {
+                throw new Exception("Error: " . mysqli_error($conn));
+            }
+            $query = mysqli_query($conn, "INSERT INTO proses_review_mg(Plant,
                                                                 UnitCode,
                                                                 PlanningNumber,
                                                                 Years,
                                                                 Approved,
+                                                                Keterangan,
                                                                 CreatedOn,
                                                                 CreatedBy)
                                 VALUES('$plant',
@@ -799,13 +826,97 @@ if (isset($_POST['prosessaveapprovalproses'])) {
                                         '$planningnumber',
                                         '$years',
                                         'X',
+                                        '$catatan',
                                         '$createdon',
                                         '$createdby')");
-        if ($query === true) {
-            $return = true;
+            if (!$query) {
+                throw new Exception("Error: " . mysqli_error($conn));
+            }
+        } else {
+            throw new Exception("Error: " . mysqli_error($conn));
         }
+        $return = true;
+        mysqli_commit($conn);
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $msg = "Data gagal tersimpan";
+        errorlog($e->getMessage());
+        $return = false;
     }
-    echo $return;
+    $data = [
+        "iconmsg" => 'warning',
+        "time" => $time,
+        "msg" => $msg,
+        "link" => null,
+        "id" => $planningnumber,
+        "return" => $return
+    ];
+
+    echo json_encode($data);
+    exit;
+}
+if (isset($_POST['prosestolakapprovalproses'])) {
+    $planningnumber = $_POST['prosestolakapprovalproses'][0] ?? '';
+    $years = $_POST['prosestolakapprovalproses'][1] ?? '';
+    $catatan = $_POST['prosestolakapprovalproses'][2] ?? '';
+
+    try {
+        mysqli_begin_transaction($conn);
+        $sql = mysqli_query($conn, "SELECT PlanningNumber FROM planning_prod_header WHERE Plant='$plant' AND 
+                                                                            UnitCode='$unitcode' AND 
+                                                                            PlanningNumber='$planningnumber' AND
+                                                                            Years='$years' AND
+                                                                            ReviewMG is null");
+        if (mysqli_num_rows($sql) != 0) {
+            $query = mysqli_query($conn, "UPDATE planning_prod_header SET ReviewMG='X', SttsX='DEL'
+                                            WHERE Plant='$plant' AND 
+                                                UnitCode='$unitcode' AND 
+                                                PlanningNumber='$planningnumber' AND
+                                                Years='$years'");
+            if (!$query) {
+                throw new Exception("Error: " . mysqli_error($conn));
+            }
+            $query = mysqli_query($conn, "INSERT INTO proses_review_mg(Plant,
+                                                                UnitCode,
+                                                                PlanningNumber,
+                                                                Years,
+                                                                Approved,
+                                                                Keterangan,
+                                                                CreatedOn,
+                                                                CreatedBy)
+                                VALUES('$plant',
+                                        '$unitcode',
+                                        '$planningnumber',
+                                        '$years',
+                                        '',
+                                        '$catatan',
+                                        '$createdon',
+                                        '$createdby')");
+            if (!$query) {
+                throw new Exception("Error: " . mysqli_error($conn));
+            }
+        } else {
+            throw new Exception("Error: " . mysqli_error($conn));
+        }
+        $return = true;
+        mysqli_commit($conn);
+    } catch (Exception $e) {
+        mysqli_rollback($conn);
+        $msg = "Data gagal tersimpan";
+        errorlog($e->getMessage());
+        $return = false;
+    }
+    $data = [
+        "iconmsg" => 'warning',
+        "time" => $time,
+        "msg" => $msg,
+        "link" => null,
+        "id" => $planningnumber,
+        "return" => $return
+    ];
+
+    echo json_encode($data);
+    exit;
 }
 if (isset($_POST['prosesapprovechangepersiapanpengolahan'])) {
     $notiket = $_POST['prosesapprovechangepersiapanpengolahan'][0];
@@ -903,29 +1014,6 @@ if (isset($_POST['prosesapprovechangepersiapanpengolahan'])) {
                                                                     NoUpdate='$notiket' AND
                                                                     NoUpdateYears='$tiketyears' AND
                                                                     ObjectUpdate='$obj'");
-        }
-    }
-    echo $return;
-}
-
-// ---------------------------------------------------------
-// Otorisasi
-// ---------------------------------------------------------
-if (isset($_POST['prosesceksession'])) {
-    $return = false;
-    $sql = mysqli_query($conn, "SELECT * FROM user_log WHERE UserID='$_SESSION[userid]'");
-    $r = mysqli_fetch_array($sql);
-    if (mysqli_num_rows($sql) == 0) {
-        session_destroy();
-        $return = true;
-    } else {
-        $time = strtotime($r['LastAct']);
-        $time_now = strtotime(date('Y-m-d H:i:s'));
-        $diff = $time_now - $time;
-        $jam = floor($diff / (60 * 60));
-        if ($jam > 0) {
-            session_destroy();
-            $return = true;
         }
     }
     echo $return;
@@ -5440,7 +5528,7 @@ if (isset($_POST['prosessimpanpersiapanhoper'])) {
         mysqli_commit($conn);
     } catch (Exception $e) {
         mysqli_rollback($conn);
-        $msg = $e->getMessage();
+        $msg = "Data gagal tersimpan";
         errorlog($e->getMessage());
         $return = false;
     }
@@ -9177,7 +9265,7 @@ if (isset($_POST['prosessimpangeneralsetting'])) {
 }
 
 // ---------------------------------------------------------
-// Approval Proses
+// Approval Proses -EXP
 // ---------------------------------------------------------
 if (isset($_POST['prosesdisplayapprovalproses'])) {
     $planningnumber = $_POST['prosesdisplayapprovalproses'][0];
@@ -10352,47 +10440,6 @@ if (isset($_POST["prosesgetdatatimbangan"])) {
     $dump['return'] = $return;
     echo json_encode($dump);
 }
-// if (isset($_POST["prosesgetdatatimbanganmanually"])) {
-//     $net = '';
-//     $address = trim($_POST["prosesgetdatatimbanganmanually"][0]);
-//     $port = $_POST["prosesgetdatatimbanganmanually"][1];
-//     $plant = $_SESSION['plant'];
-//     $unitcode = $_SESSION['unitcode'];
-//     $return = false;
-
-//     $ping_modbus = exec('ping -n 1 -w 1 ' . $address);
-//     $result_ping = strpos($ping_modbus, 'Packets');
-//     if ($result_ping != 4) {
-//         $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP) or die('ERROR');
-//         $sock_konek = socket_connect($sock, $address, $port) or die('ERROR');
-//         if ($sock_konek === true) {
-//             $response = socket_read($sock, 65535);
-//             $net = explode(" ", $response);
-//             if ($weight == 'gross') {
-//                 $dump['weight'] = $net[0];
-//                 $dump['weight_qty'] = $net[4];
-//                 $dump['weight_uom'] = $net[5];
-//             }
-//             if ($weight == 'tare') {
-//                 $dump['weight'] = $net[6];
-//                 $dump['weight_qty'] = $net[11];
-//                 $dump['weight_uom'] = $net[12];
-//             }
-//             if ($weight == 'net') {
-//                 $dump['weight'] = $net[13];
-//                 $dump['weight_qty'] = $net[19];
-//                 $dump['weight_uom'] = $net[20];
-//             }
-//             $return = 1;
-//         }
-//         socket_close($sock);
-//     } else {
-//         $return = 2;
-//     }
-//     $dump['cb'] = $sock_konek;
-//     $dump['return'] = $return;
-//     echo json_encode($dump);
-// }
 if (isset($_POST["prosesadditionaldatatimbangan"])) {
     $dump[] = '';
     $return = false;
@@ -10649,7 +10696,6 @@ if (isset($_POST['prosessimpandatanomorlot'])) {
     ];
     echo json_encode($data);
 }
-
 if (isset($_POST['prosesdeletenomorlot'])) {
     try {
         mysqli_begin_transaction($conn);
